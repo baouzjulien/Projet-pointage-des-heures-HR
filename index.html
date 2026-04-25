@@ -605,12 +605,15 @@ function init() {
     const el = document.getElementById(id);
     if (el && data[id]) el.value = data[id];
   });
-  // Mise à jour dates auto si vides
+  // Dates par défaut : lundi au dimanche de la semaine en cours
   if (!data['date-debut']) {
     const lundi = getLundi(new Date());
+    const dimanche = new Date(lundi);
+    dimanche.setDate(lundi.getDate() + 6);
     document.getElementById('date-debut').value = toISO(lundi);
-    const vendredi = new Date(lundi); vendredi.setDate(lundi.getDate() + 4);
-    document.getElementById('date-fin').value = toISO(vendredi);
+    document.getElementById('date-fin').value = toISO(dimanche);
+    data['date-debut'] = toISO(lundi);
+    data['date-fin'] = toISO(dimanche);
   }
   // Visas
   if (data.visas) {
@@ -643,14 +646,14 @@ function renderTableau() {
       <td><input class="input-nb" type="number" min="0" value="${ligne.fdm||''}" placeholder="—" oninput="updateLigne(${i},'fdm',this.value)"></td>
       <td>
         <div class="detail-wrap">
-          <input type="text" value="${ligne.hdebut||''}" placeholder="07:00" maxlength="5" oninput="updateLigne(${i},'hdebut',this.value)">
+          <input type="text" value="${ligne.hdebut||''}" placeholder="07:30" maxlength="5" oninput="updateLigne(${i},'hdebut',this.value)">
           <span class="detail-sep">→</span>
-          <input type="text" value="${ligne.hfin||''}" placeholder="18:00" maxlength="5" oninput="updateLigne(${i},'hfin',this.value)">
+          <input type="text" value="${ligne.hfin||''}" placeholder="17:00" maxlength="5" oninput="updateLigne(${i},'hfin',this.value)">
         </div>
       </td>
       <td>
         <div class="detail-wrap">
-          <input type="text" value="${ligne.pause||''}" placeholder="00:30" maxlength="5" oninput="updateLigne(${i},'pause',this.value)" style="width:52px;">
+          <input type="text" value="${ligne.pause||''}" placeholder="00:00" maxlength="5" oninput="updateLigne(${i},'pause',this.value)" style="width:52px;">
         </div>
       </td>
       <td>
@@ -740,12 +743,6 @@ function toISO(d) {
   return d.toISOString().split('T')[0];
 }
 function updateSemaine() {
-  const debut = document.getElementById('date-debut').value;
-  if (debut) {
-    const d = new Date(debut);
-    const fin = new Date(d); fin.setDate(d.getDate() + 6);
-    document.getElementById('date-fin').value = toISO(fin);
-  }
   sauvegarder();
 }
 
