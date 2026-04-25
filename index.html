@@ -1,0 +1,866 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="theme-color" content="#1a1a2e">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pointage HR">
+<link rel="manifest" href="manifest.json">
+<link rel="apple-touch-icon" href="icon-192.png">
+<title>Pointage HR Occitanie</title>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600&family=IBM+Plex+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --noir: #0f0f0f;
+    --blanc: #f5f4f0;
+    --gris-leger: #e8e7e3;
+    --gris-moyen: #c2c0b8;
+    --gris-fonce: #6b6960;
+    --accent: #1a1a2e;
+    --accent-light: #2d2d4a;
+    --rouge: #c0392b;
+    --vert: #1a6b3c;
+    --bordure: 1.5px solid #0f0f0f;
+    --bordure-fine: 1px solid #0f0f0f;
+    --font-mono: 'IBM Plex Mono', monospace;
+    --font-sans: 'IBM Plex Sans', sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #d9d8d2;
+    font-family: var(--font-sans);
+    min-height: 100vh;
+    padding: 24px 16px 60px;
+    background-image:
+      repeating-linear-gradient(0deg, transparent, transparent 27px, rgba(0,0,0,0.04) 27px, rgba(0,0,0,0.04) 28px),
+      repeating-linear-gradient(90deg, transparent, transparent 27px, rgba(0,0,0,0.02) 27px, rgba(0,0,0,0.02) 28px);
+  }
+
+  /* ===== DOCUMENT ===== */
+  .document {
+    max-width: 960px;
+    margin: 0 auto;
+    background: var(--blanc);
+    border: 2px solid var(--noir);
+    box-shadow: 6px 6px 0 var(--noir);
+    position: relative;
+  }
+
+  /* ===== EN-TÊTE ===== */
+  .entete {
+    padding: 20px 24px 16px;
+    border-bottom: var(--bordure);
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+
+  .titre-doc {
+    font-family: var(--font-sans);
+    font-size: 22px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: var(--noir);
+    line-height: 1.1;
+  }
+
+  .semaine-zone {
+    display: flex;
+    gap: 32px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+
+  .semaine-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--gris-fonce);
+    margin-bottom: 4px;
+  }
+
+  .semaine-input {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    border: none;
+    border-bottom: 2px solid var(--noir);
+    background: transparent;
+    color: var(--noir);
+    padding: 2px 4px;
+    width: 130px;
+    outline: none;
+    text-align: center;
+  }
+  .semaine-input:focus { background: #ffeaa7; }
+
+  /* ===== BLOC IDENTITÉ ===== */
+  .identite {
+    display: grid;
+    grid-template-columns: 1fr 1.8fr 1fr;
+    border-bottom: var(--bordure);
+  }
+
+  .id-cell {
+    padding: 10px 14px;
+    border-right: var(--bordure);
+  }
+  .id-cell:last-child { border-right: none; }
+
+  .id-label {
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: var(--gris-fonce);
+    margin-bottom: 6px;
+  }
+
+  .id-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+  }
+
+  .id-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .id-row-label {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    color: var(--noir);
+    min-width: 52px;
+  }
+
+  .id-input {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    font-weight: 500;
+    border: none;
+    border-bottom: 1px solid var(--gris-moyen);
+    background: transparent;
+    color: var(--noir);
+    padding: 1px 4px;
+    flex: 1;
+    outline: none;
+    min-width: 80px;
+  }
+  .id-input:focus { border-bottom-color: var(--noir); background: #ffeaa7; }
+
+  .visa-zone {
+    min-height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--gris-moyen);
+    font-family: var(--font-mono);
+    font-size: 11px;
+    letter-spacing: 1px;
+    font-style: italic;
+  }
+
+  /* ===== TABLEAU ===== */
+  .tableau-wrap {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 680px;
+  }
+
+  /* En-tête colonnes */
+  thead th {
+    background: var(--accent);
+    color: var(--blanc);
+    font-family: var(--font-mono);
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    text-align: center;
+    padding: 10px 6px;
+    border-right: 1px solid rgba(255,255,255,0.15);
+    white-space: nowrap;
+  }
+  thead th:last-child { border-right: none; }
+
+  /* Largeurs colonnes */
+  .col-jour        { width: 90px; }
+  .col-bl          { width: 68px; }
+  .col-chantier    { width: auto; min-width: 160px; }
+  .col-fdm         { width: 68px; }
+  .col-detail      { width: 150px; }
+  .col-pause       { width: 68px; }
+  .col-repas       { width: 52px; }
+  .col-nuit        { width: 68px; }
+  .col-total       { width: 78px; }
+
+  /* Lignes */
+  tbody tr {
+    border-bottom: var(--bordure-fine);
+    transition: background 0.1s;
+  }
+  tbody tr:nth-child(even) { background: rgba(0,0,0,0.018); }
+  tbody tr:hover { background: #fef9e7; }
+
+  tbody td {
+    border-right: var(--bordure-fine);
+    padding: 0;
+    vertical-align: middle;
+  }
+  tbody td:last-child { border-right: none; }
+
+  /* Inputs dans les cellules */
+  .cell-input {
+    font-family: var(--font-sans);
+    font-size: 13px;
+    border: none;
+    background: transparent;
+    color: var(--noir);
+    padding: 7px 8px;
+    width: 100%;
+    height: 36px;
+    outline: none;
+    text-align: center;
+  }
+  .cell-input.left { text-align: left; }
+  .cell-input:focus { background: #fef3cd; }
+
+  .cell-input.mono {
+    font-family: var(--font-mono);
+    font-size: 12px;
+  }
+
+  /* Champ JOUR — select stylisé */
+  .jour-select {
+    font-family: var(--font-sans);
+    font-size: 12px;
+    font-weight: 500;
+    border: none;
+    background: transparent;
+    color: var(--noir);
+    padding: 7px 4px;
+    width: 100%;
+    height: 36px;
+    outline: none;
+    text-align: center;
+    cursor: pointer;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+  .jour-select:focus { background: #fef3cd; }
+
+  /* Input numérique compact (repas) */
+  .input-nb {
+    font-family: var(--font-mono);
+    font-size: 14px;
+    font-weight: 600;
+    border: none;
+    background: transparent;
+    color: var(--noir);
+    width: 100%;
+    height: 36px;
+    text-align: center;
+    outline: none;
+    padding: 0 4px;
+  }
+  .input-nb:focus { background: #fef3cd; }
+  .input-nb::-webkit-inner-spin-button,
+  .input-nb::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+  .input-nb[type=number] { -moz-appearance: textfield; }
+
+  /* Cellule total — lecture seule */
+  .total-cell {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+    padding: 7px 6px;
+    color: var(--noir);
+    height: 36px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0,0,0,0.03);
+  }
+  .total-cell.has-value { color: var(--vert); }
+
+  /* Détail heures — format HH:MM–HH:MM */
+  .detail-wrap {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    padding: 0 4px;
+  }
+  .detail-wrap input {
+    font-family: var(--font-mono);
+    font-size: 12px;
+    border: none;
+    background: transparent;
+    color: var(--noir);
+    width: 42px;
+    text-align: center;
+    outline: none;
+    padding: 7px 2px;
+    height: 36px;
+  }
+  .detail-wrap input:focus { background: #fef3cd; }
+  .detail-sep {
+    font-family: var(--font-mono);
+    font-size: 13px;
+    color: var(--gris-fonce);
+    line-height: 1;
+  }
+
+  /* ===== PIED DE TABLEAU ===== */
+  tfoot tr td {
+    background: var(--gris-leger);
+    border-right: var(--bordure-fine);
+    border-top: var(--bordure);
+    padding: 8px 6px;
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    text-align: center;
+    letter-spacing: 0.5px;
+    color: var(--noir);
+  }
+  tfoot .totaux-label {
+    text-align: left;
+    padding-left: 12px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  tfoot .grand-total {
+    font-size: 15px;
+    color: var(--vert);
+    background: #e8f5ee;
+    border-right: none;
+  }
+  tfoot .repas-total, tfoot .nuit-total {
+    font-size: 13px;
+    color: var(--accent);
+  }
+
+  /* ===== ACTIONS ===== */
+  .actions {
+    padding: 16px 20px;
+    display: flex;
+    gap: 10px;
+    flex-wrap: wrap;
+    border-top: var(--bordure);
+    background: var(--gris-leger);
+  }
+
+  .btn {
+    font-family: var(--font-mono);
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    padding: 10px 18px;
+    border: 2px solid var(--noir);
+    cursor: pointer;
+    transition: all 0.15s;
+    background: var(--blanc);
+    color: var(--noir);
+    box-shadow: 2px 2px 0 var(--noir);
+  }
+  .btn:hover { transform: translate(-1px,-1px); box-shadow: 3px 3px 0 var(--noir); }
+  .btn:active { transform: translate(1px,1px); box-shadow: 1px 1px 0 var(--noir); }
+
+  .btn-primary {
+    background: var(--accent);
+    color: var(--blanc);
+    box-shadow: 2px 2px 0 #000;
+  }
+  .btn-primary:hover { background: var(--accent-light); }
+
+  .btn-danger { border-color: var(--rouge); color: var(--rouge); }
+  .btn-danger:hover { background: var(--rouge); color: white; }
+
+  /* ===== STATUT VISA ===== */
+  .visa-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: var(--font-mono);
+    font-size: 10px;
+    letter-spacing: 0.8px;
+    text-transform: uppercase;
+    padding: 4px 10px;
+    border: 1.5px solid currentColor;
+  }
+  .visa-status.attente { color: var(--gris-fonce); }
+  .visa-status.valide { color: var(--vert); }
+
+  .dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+    animation: pulse 1.5s infinite;
+  }
+  .visa-status.valide .dot { animation: none; }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+  }
+
+  /* ===== TOAST ===== */
+  .toast {
+    position: fixed;
+    bottom: 24px;
+    left: 50%;
+    transform: translateX(-50%) translateY(80px);
+    background: var(--noir);
+    color: var(--blanc);
+    font-family: var(--font-mono);
+    font-size: 12px;
+    letter-spacing: 0.5px;
+    padding: 12px 20px;
+    border: 2px solid var(--blanc);
+    box-shadow: 4px 4px 0 rgba(0,0,0,0.3);
+    opacity: 0;
+    transition: all 0.3s cubic-bezier(0.34,1.56,0.64,1);
+    z-index: 1000;
+    white-space: nowrap;
+  }
+  .toast.show {
+    transform: translateX(-50%) translateY(0);
+    opacity: 1;
+  }
+
+  /* ===== RESPONSIVE ===== */
+  @media (max-width: 640px) {
+    .entete { flex-direction: column; gap: 10px; }
+    .titre-doc { font-size: 16px; }
+    .identite { grid-template-columns: 1fr; }
+    .id-cell { border-right: none; border-bottom: var(--bordure-fine); }
+    .id-cell:last-child { border-bottom: none; }
+    .actions { padding: 12px; }
+    .btn { font-size: 10px; padding: 9px 14px; }
+  }
+
+  @media print {
+    body { background: white; padding: 0; }
+    .document { box-shadow: none; border: 1px solid black; }
+    .actions { display: none; }
+    .cell-input, .jour-select, .detail-wrap input { border-bottom: none !important; }
+    .cell-input:focus, .jour-select:focus { background: transparent !important; }
+  }
+</style>
+</head>
+<body>
+
+<div class="document">
+
+  <!-- EN-TÊTE -->
+  <div class="entete">
+    <div class="titre-doc">FEUILLE DE POINTAGE<br>HR OCCITANIE</div>
+    <div class="semaine-zone">
+      <div>
+        <div class="semaine-label">Semaine du</div>
+        <input type="date" class="semaine-input" id="date-debut" onchange="updateSemaine()">
+      </div>
+      <div>
+        <div class="semaine-label">Au</div>
+        <input type="date" class="semaine-input" id="date-fin" onchange="sauvegarder()">
+      </div>
+    </div>
+  </div>
+
+  <!-- IDENTITÉ -->
+  <div class="identite">
+    <div class="id-cell">
+      <div class="id-field">
+        <div class="id-row">
+          <span class="id-row-label">NOM :</span>
+          <input class="id-input" type="text" id="nom" placeholder="—" oninput="sauvegarder()">
+        </div>
+        <div class="id-row">
+          <span class="id-row-label">PRÉNOM :</span>
+          <input class="id-input" type="text" id="prenom" placeholder="—" oninput="sauvegarder()">
+        </div>
+        <div class="id-row">
+          <span class="id-row-label">ENGIN :</span>
+          <input class="id-input" type="text" id="engin" placeholder="—" oninput="sauvegarder()">
+        </div>
+      </div>
+    </div>
+    <div class="id-cell">
+      <div class="id-label">Visa chauffeur</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:6px;flex-wrap:wrap;">
+        <span class="visa-status attente" id="visa-chauffeur-status"><span class="dot"></span>En attente</span>
+        <button class="btn" onclick="toggleVisa('chauffeur')" style="font-size:10px;padding:6px 12px;box-shadow:1px 1px 0 #000;">Signer</button>
+      </div>
+    </div>
+    <div class="id-cell" style="border-right:none;">
+      <div class="id-label">Visa direction</div>
+      <div style="display:flex;align-items:center;gap:12px;margin-top:6px;flex-wrap:wrap;">
+        <span class="visa-status attente" id="visa-direction-status"><span class="dot"></span>En attente</span>
+        <button class="btn" onclick="toggleVisa('direction')" style="font-size:10px;padding:6px 12px;box-shadow:1px 1px 0 #000;">Valider</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- TABLEAU -->
+  <div class="tableau-wrap">
+    <table id="tableau-pointage">
+      <thead>
+        <tr>
+          <th class="col-jour">JOUR</th>
+          <th class="col-bl">N° BL</th>
+          <th class="col-chantier">CHANTIERS / CLIENTS</th>
+          <th class="col-fdm">N° FDM</th>
+          <th class="col-detail">DÉTAIL DES HEURES</th>
+          <th class="col-pause">PAUSE</th>
+          <th class="col-repas">REPAS</th>
+          <th class="col-nuit">NUIT<br>(HH:MM)</th>
+          <th class="col-total">TOTAL<br>HEURES</th>
+        </tr>
+      </thead>
+      <tbody id="tbody">
+        <!-- généré par JS -->
+      </tbody>
+      <tfoot>
+        <tr>
+          <td class="totaux-label" colspan="5">TOTAUX SEMAINE</td>
+          <td></td>
+          <td class="repas-total" id="total-repas">0</td>
+          <td class="nuit-total" id="total-nuit">0h00</td>
+          <td class="grand-total" id="grand-total">0h00</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+
+  <!-- CONFIRMATION RÉINITIALISATION -->
+  <div id="confirm-overlay" style="display:none;background:#c0392b;padding:14px 20px;border-top:2px solid var(--noir);">
+    <p style="font-family:var(--font-sans);font-size:14px;font-weight:500;color:white;margin-bottom:12px;">Réinitialiser toute la feuille ? Les données seront perdues.</p>
+    <div style="display:flex;gap:12px;">
+      <button class="btn" onclick="confirmerReinit(false)" style="flex:1;background:white;border-color:white;">Annuler</button>
+      <button class="btn" onclick="confirmerReinit(true)" style="flex:1;background:var(--noir);color:white;border-color:var(--noir);">Confirmer</button>
+    </div>
+  </div>
+
+  <!-- ACTIONS -->
+  <div class="actions">
+    <button class="btn btn-primary" onclick="exportCSV()">⬇ Exporter CSV</button>
+    <button class="btn btn-primary" onclick="imprimerFeuille()">🖨 Imprimer</button>
+    <button class="btn" onclick="ajouterLigne()">+ Ligne</button>
+    <button class="btn btn-danger" onclick="reinitialiser()">↺ Réinitialiser</button>
+    <div style="flex:1"></div>
+    <span style="font-family:var(--font-mono);font-size:10px;color:var(--gris-fonce);letter-spacing:0.5px;align-self:center;" id="save-status">Sauvegarde auto ✓</span>
+  </div>
+
+</div>
+
+
+<div class="toast" id="toast"></div>
+
+<script>
+const JOURS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche','Férié','—'];
+const NB_LIGNES_DEFAUT = 20;
+const VERSION = 2;
+let data = { version: VERSION, lignes: [], visas: { chauffeur: false, direction: false } };
+
+// ===== INIT =====
+function init() {
+  const saved = localStorage.getItem('pointage_hr_occitanie');
+  if (saved) {
+    try {
+      const parsed = JSON.parse(saved);
+      if (parsed.version === VERSION) {
+        data = parsed;
+      } else {
+        localStorage.removeItem('pointage_hr_occitanie');
+        afficherToast('Mise à jour détectée — nouvelle feuille créée');
+      }
+    } catch(e) { localStorage.removeItem('pointage_hr_occitanie'); }
+  }
+  if (!data.lignes || data.lignes.length === 0) {
+    data.lignes = Array.from({ length: NB_LIGNES_DEFAUT }, () => creerLigneVide());
+  }
+  // Charger identité
+  ['nom','prenom','engin','date-debut','date-fin'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el && data[id]) el.value = data[id];
+  });
+  // Mise à jour dates auto si vides
+  if (!data['date-debut']) {
+    const lundi = getLundi(new Date());
+    document.getElementById('date-debut').value = toISO(lundi);
+    const vendredi = new Date(lundi); vendredi.setDate(lundi.getDate() + 4);
+    document.getElementById('date-fin').value = toISO(vendredi);
+  }
+  // Visas
+  if (data.visas) {
+    if (data.visas.chauffeur) setVisaStatus('chauffeur', true);
+    if (data.visas.direction) setVisaStatus('direction', true);
+  }
+  renderTableau();
+}
+
+function creerLigneVide() {
+  return { jour: '', bl: '', chantier: '', fdm: '', hdebut: '', hfin: '', pause: '', repas: 0, nuit: '' };
+}
+
+// ===== RENDER =====
+function renderTableau() {
+  const tbody = document.getElementById('tbody');
+  tbody.innerHTML = '';
+  data.lignes.forEach((ligne, i) => {
+    const tr = document.createElement('tr');
+    const min = calculerMinutes(ligne);
+    tr.innerHTML = `
+      <td>
+        <select class="jour-select" onchange="updateLigne(${i},'jour',this.value)">
+          <option value="">—</option>
+          ${JOURS.map(j => `<option value="${j}" ${ligne.jour===j?'selected':''}>${j}</option>`).join('')}
+        </select>
+      </td>
+      <td><input class="input-nb" type="number" min="0" value="${ligne.bl||''}" placeholder="—" oninput="updateLigne(${i},'bl',this.value)"></td>
+      <td><input class="cell-input left" type="text" value="${ligne.chantier||''}" placeholder="" oninput="updateLigne(${i},'chantier',this.value)"></td>
+      <td><input class="input-nb" type="number" min="0" value="${ligne.fdm||''}" placeholder="—" oninput="updateLigne(${i},'fdm',this.value)"></td>
+      <td>
+        <div class="detail-wrap">
+          <input type="text" value="${ligne.hdebut||''}" placeholder="07:00" maxlength="5" oninput="updateLigne(${i},'hdebut',this.value)">
+          <span class="detail-sep">→</span>
+          <input type="text" value="${ligne.hfin||''}" placeholder="18:00" maxlength="5" oninput="updateLigne(${i},'hfin',this.value)">
+        </div>
+      </td>
+      <td>
+        <div class="detail-wrap">
+          <input type="text" value="${ligne.pause||''}" placeholder="00:30" maxlength="5" oninput="updateLigne(${i},'pause',this.value)" style="width:52px;">
+        </div>
+      </td>
+      <td>
+        <input class="input-nb" type="number" min="0" max="3" value="${ligne.repas||''}" placeholder="0"
+          oninput="updateLigne(${i},'repas',this.value === '' ? 0 : Math.min(3,Math.max(0,parseInt(this.value)||0)))">
+      </td>
+      <td>
+        <div class="detail-wrap">
+          <input type="text" value="${ligne.nuit||''}" placeholder="00:00" maxlength="5" oninput="updateLigne(${i},'nuit',this.value)" style="width:54px;">
+        </div>
+      </td>
+      <td>
+        <div class="total-cell ${min>0?'has-value':''}">${formatHeures(min)}</div>
+      </td>
+    `;
+    tbody.appendChild(tr);
+  });
+  updateTotaux();
+}
+
+// ===== MISE À JOUR =====
+function updateLigne(i, champ, val) {
+  data.lignes[i][champ] = val;
+  const tr = document.getElementById('tbody').rows[i];
+  const min = calculerMinutes(data.lignes[i]);
+  const totalCell = tr.querySelector('.total-cell');
+  totalCell.textContent = formatHeures(min);
+  totalCell.className = 'total-cell' + (min > 0 ? ' has-value' : '');
+  updateTotaux();
+  sauvegarder();
+}
+
+// ===== CALCULS =====
+function parseHeure(str) {
+  if (!str) return null;
+  str = str.trim().replace('h', ':').replace('.', ':');
+  const m = str.match(/^(\d{1,2}):?(\d{2})?$/);
+  if (!m) return null;
+  const h = parseInt(m[1]);
+  const min = parseInt(m[2] || '0');
+  if (h < 0 || h > 23 || min < 0 || min > 59) return null;
+  return h * 60 + min;
+}
+
+function calculerMinutes(ligne) {
+  const debut = parseHeure(ligne.hdebut);
+  const fin = parseHeure(ligne.hfin);
+  const pause = parseHeure(ligne.pause) || 0;
+  const nuit = parseHeure(ligne.nuit) || 0;
+  let heuresJour = 0;
+  if (debut !== null && fin !== null) {
+    let diff = fin - debut;
+    if (diff < 0) diff += 24 * 60;
+    heuresJour = Math.max(0, diff - pause);
+  }
+  return heuresJour + nuit;
+}
+
+function formatHeures(min) {
+  if (!min) return '—';
+  const h = Math.floor(min / 60);
+  const m = min % 60;
+  return `${h}h${String(m).padStart(2,'0')}`;
+}
+
+function updateTotaux() {
+  let totalMin = 0, totalRepas = 0, totalNuitMin = 0;
+  data.lignes.forEach(l => {
+    totalMin += calculerMinutes(l);
+    totalRepas += parseInt(l.repas) || 0;
+    totalNuitMin += parseHeure(l.nuit) || 0;
+  });
+  document.getElementById('grand-total').textContent = formatHeures(totalMin);
+  document.getElementById('total-repas').textContent = totalRepas || '—';
+  document.getElementById('total-nuit').textContent = formatHeures(totalNuitMin);
+}
+
+// ===== SEMAINE AUTO =====
+function getLundi(d) {
+  const day = d.getDay();
+  const diff = (day === 0) ? -6 : 1 - day;
+  const lundi = new Date(d);
+  lundi.setDate(d.getDate() + diff);
+  return lundi;
+}
+function toISO(d) {
+  return d.toISOString().split('T')[0];
+}
+function updateSemaine() {
+  const debut = document.getElementById('date-debut').value;
+  if (debut) {
+    const d = new Date(debut);
+    const fin = new Date(d); fin.setDate(d.getDate() + 6);
+    document.getElementById('date-fin').value = toISO(fin);
+  }
+  sauvegarder();
+}
+
+// ===== SAUVEGARDE =====
+function sauvegarder() {
+  ['nom','prenom','engin','date-debut','date-fin'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) data[id] = el.value;
+  });
+  data.version = VERSION;
+  localStorage.setItem('pointage_hr_occitanie', JSON.stringify(data));
+  const st = document.getElementById('save-status');
+  st.textContent = 'Sauvegardé ✓';
+  setTimeout(() => st.textContent = 'Sauvegarde auto ✓', 1500);
+}
+
+// ===== VISA =====
+function toggleVisa(type) {
+  data.visas[type] = !data.visas[type];
+  setVisaStatus(type, data.visas[type]);
+  sauvegarder();
+  afficherToast(data.visas[type] ? `Visa ${type} apposé` : `Visa ${type} retiré`);
+}
+function setVisaStatus(type, val) {
+  const el = document.getElementById(`visa-${type}-status`);
+  if (val) {
+    el.className = 'visa-status valide';
+    el.innerHTML = '<span class="dot"></span>Validé';
+  } else {
+    el.className = 'visa-status attente';
+    el.innerHTML = '<span class="dot"></span>En attente';
+  }
+  data.visas[type] = val;
+}
+
+// ===== ACTIONS =====
+function ajouterLigne() {
+  data.lignes.push(creerLigneVide());
+  renderTableau();
+  sauvegarder();
+  afficherToast('Ligne ajoutée');
+}
+
+function reinitialiser() {
+  document.getElementById('confirm-overlay').style.display = 'flex';
+}
+
+function confirmerReinit(oui) {
+  document.getElementById('confirm-overlay').style.display = 'none';
+  if (!oui) return;
+  data = { version: VERSION, lignes: Array.from({ length: NB_LIGNES_DEFAUT }, () => creerLigneVide()), visas: { chauffeur: false, direction: false } };
+  ['nom','prenom','engin','date-debut','date-fin'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  setVisaStatus('chauffeur', false);
+  setVisaStatus('direction', false);
+  renderTableau();
+  sauvegarder();
+  afficherToast('Feuille réinitialisée');
+}
+
+function exportCSV() {
+  const nom = document.getElementById('nom').value || 'employe';
+  const prenom = document.getElementById('prenom').value || '';
+  const engin = document.getElementById('engin').value || '';
+  const debut = document.getElementById('date-debut').value || '';
+  const fin = document.getElementById('date-fin').value || '';
+
+  let csv = 'FEUILLE DE POINTAGE HR OCCITANIE\n';
+  csv += `Semaine du;${debut};au;${fin}\n`;
+  csv += `Nom;${nom};Prénom;${prenom};Engin;${engin}\n\n`;
+  csv += 'JOUR;N° BL;CHANTIERS / CLIENTS;N° FDM;HEURE DÉBUT;HEURE FIN;PAUSE;TOTAL HEURES;REPAS;NUIT\n';
+
+  data.lignes.forEach(l => {
+    if (!l.jour && !l.chantier && !l.hdebut) return;
+    const min = calculerMinutes(l);
+    csv += `${l.jour};${l.bl};${l.chantier};${l.fdm};${l.hdebut};${l.hfin};${l.pause||''};${formatHeures(min)};${l.repas||0};${l.nuit||''}\n`;
+  });
+
+  // Totaux
+  let totalMin = 0, tr = 0, tnMin = 0;
+  data.lignes.forEach(l => { totalMin += calculerMinutes(l); tr += parseInt(l.repas)||0; tnMin += parseHeure(l.nuit)||0; });
+  csv += `\nTOTAUX;;;;;;;;;${formatHeures(totalMin)};${tr};${formatHeures(tnMin)}\n`;
+  csv += `\nVisa chauffeur;${data.visas.chauffeur?'Validé':'En attente'};Visa direction;${data.visas.direction?'Validé':'En attente'}\n`;
+
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `pointage_${nom}_${prenom}_${debut}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  afficherToast('CSV exporté avec succès');
+}
+
+function imprimerFeuille() {
+  window.print();
+}
+
+// ===== TOAST =====
+function afficherToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ===== DÉMARRAGE =====
+document.addEventListener('DOMContentLoaded', init);
+
+// ===== SERVICE WORKER =====
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('./service-worker.js');
+}
+</script>
+</body>
+</html>
