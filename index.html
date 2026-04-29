@@ -44,8 +44,13 @@
   .user-bar-info { display:flex; align-items:center; gap:12px; }
   .user-bar-nom { font-weight:600; font-size:13px; }
   .user-bar-role { background:rgba(255,255,255,0.15); padding:3px 10px; font-size:10px; letter-spacing:1px; text-transform:uppercase; }
-  .btn-deconnexion { font-family:var(--font-mono); font-size:11px; font-weight:600; background:var(--rouge); border:2px solid #fff; color:#fff; padding:7px 14px; cursor:pointer; letter-spacing:0.5px; text-transform:uppercase; transition:all 0.15s; }
+  .btn-deconnexion { font-family:var(--font-mono); font-size:11px; font-weight:600; background:var(--rouge); border:2px solid #fff; color:#fff; padding:7px 14px; cursor:pointer; letter-spacing:0.5px; text-transform:uppercase; transition:all 0.15s; white-space:nowrap; }
   .btn-deconnexion:hover { background:#a93226; }
+  .btn-deconnexion .label-deconnexion { display:inline; }
+  @media (max-width:480px) {
+    .btn-deconnexion { padding:6px 10px; font-size:14px; letter-spacing:0; }
+    .btn-deconnexion .label-deconnexion { display:none; }
+  }
 
   /* ONGLETS */
   .onglets-bar { background:var(--gris-leger); border-bottom:var(--bordure); display:flex; gap:0; overflow-x:auto; -webkit-overflow-scrolling:touch; padding:0 16px; }
@@ -175,7 +180,7 @@
         <span class="user-bar-nom" id="user-nom">—</span>
         <span class="user-bar-role" id="user-role">—</span>
       </div>
-      <button class="btn-deconnexion" onclick="seDeconnecter()">⏻ Déconnexion</button>
+      <button class="btn-deconnexion" onclick="seDeconnecter()">⏻ <span class="label-deconnexion">Déconnexion</span></button>
     </div>
 
     <!-- ONGLETS RESPONSABLE -->
@@ -299,13 +304,42 @@ let feuilleVerrouillee = false;
 // ===== FORMAT DATE COURT =====
 function formatDateCourte(str) {
   if (!str) return '';
-  // Gère "30/04/2026 14:32:00" ou "30/04/2026, 14:32:00"
-  const m = str.match(/(\d{2})\/(\d{2})\/(\d{4})[,\s]+(\d{2}):(\d{2})/);
-  if (!m) return str;
   const jours = ['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'];
-  const d = new Date(`${m[3]}-${m[2]}-${m[1]}T${m[4]}:${m[5]}:00`);
-  const nomJour = jours[d.getDay()];
-  return `Signé le ${nomJour} ${m[1]}/${m[2]} à ${m[4]}h${m[5]}`;
+  let d = null;
+
+  // Format FR : "30/04/2026 14:32:00" ou "30/04/2026, 14:32:00"
+  const mFR = str.match(/(\d{2})\/(\d{2})\/(\d{4})[,\s]+(\d{2}):(\d{2})/);
+  if (mFR) {
+    d = new Date(`${mFR[3]}-${mFR[2]}-${mFR[1]}T${mFR[4]}:${mFR[5]}:00`);
+    return `Signé le ${jours[d.getDay()]} ${mFR[1]}/${mFR[2]} à ${mFR[4]}h${mFR[5]}`;
+  }
+
+  // Format ISO ou anglo-saxon : "2026-04-30T14:32:00" ou "4/30/2026, 2:32:00 PM"
+  const mUS = str.match(/(\d{1,2})\/(\d{1,2})\/(\d{4})[,\s]+(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(AM|PM)?/i);
+  if (mUS) {
+    let h = parseInt(mUS[4]);
+    const mn = mUS[5];
+    if (mUS[7] && mUS[7].toUpperCase() === 'PM' && h < 12) h += 12;
+    if (mUS[7] && mUS[7].toUpperCase() === 'AM' && h === 12) h = 0;
+    d = new Date(`${mUS[3]}-${String(mUS[2]).padStart(2,'0')}-${String(mUS[1]).padStart(2,'0')}T${String(h).padStart(2,'0')}:${mn}:00`);
+    const j = String(d.getDate()).padStart(2,'0');
+    const mo = String(d.getMonth()+1).padStart(2,'0');
+    return `Signé le ${jours[d.getDay()]} ${j}/${mo} à ${String(h).padStart(2,'0')}h${mn}`;
+  }
+
+  // Tentative générique
+  try {
+    d = new Date(str);
+    if (!isNaN(d)) {
+      const j = String(d.getDate()).padStart(2,'0');
+      const mo = String(d.getMonth()+1).padStart(2,'0');
+      const h = String(d.getHours()).padStart(2,'0');
+      const mn = String(d.getMinutes()).padStart(2,'0');
+      return `Signé le ${jours[d.getDay()]} ${j}/${mo} à ${h}h${mn}`;
+    }
+  } catch(e) {}
+
+  return str; // fallback : afficher tel quel
 }
 
 // ===== INIT =====
@@ -407,12 +441,20 @@ function chargerDonneesLocales() {
   feuilleVerrouillee = data.visas && data.visas.direction;
   majEtatVerrouillage();
 
-  if (data.visas && data.visas.chauffeur) setVisaStatus('chauffeur', true, data.visas.dateChauffeur);
-  else setVisaStatus('chauffeur', false);
+  if (data.visas && data.visas.chauffeur) {
+    setVisaStatus('chauffeur', true, data.visas.dateChauffeur);
+    // Masquer bouton signer si déjà signé
+    [document.getElementById('btn-signer'), document.getElementById('btn-signer-action')]
+      .forEach(b => { if(b) b.style.display='none'; });
+  } else {
+    setVisaStatus('chauffeur', false);
+  }
   if (data.visas && data.visas.direction) setVisaStatus('direction', true, data.visas.dateDirection);
   else setVisaStatus('direction', false);
 
   renderTableau();
+  // Vérifier en arrière-plan si le responsable a validé
+  verifierValidationResponsable();
 }
 
 function majEtatVerrouillage() {
@@ -505,10 +547,10 @@ async function chargerFeuille(emp) {
     if (json.ok) {
       donneesActives = json.lignes;
 
-      // Récupérer l'engin depuis la première ligne
-      if (json.lignes && json.lignes.length > 0) {
-        document.getElementById('engin').value = json.lignes[0].ENGIN || '';
-      }
+      // Engin — toujours readonly pour le responsable
+      const enginEl = document.getElementById('engin');
+      enginEl.value = (json.lignes && json.lignes.length > 0) ? (json.lignes[0].ENGIN || '') : '';
+      enginEl.readOnly = true;
 
       const dejaValide = json.validation && json.validation.visaResponsable && json.validation.visaResponsable !== '';
       const employeSigne = json.validation && json.validation.visaEmploye === 'SIGNÉ';
@@ -746,6 +788,32 @@ async function envoyerGoogleSheets() {
   } catch(e) { afficherToast('Erreur réseau — réessaie'); return false; }
 }
 
+// ===== VÉRIFIER SI VALIDÉ PAR RESPONSABLE (côté chauffeur) =====
+async function verifierValidationResponsable() {
+  const semaineDu = document.getElementById('date-debut').value;
+  if (!semaineDu || !employe) return;
+  try {
+    const res = await fetch(`${API_URL}?action=getSemaine&idEmploye=${employe.id}&semaine=${semaineDu}`);
+    const json = await res.json();
+    if (json.ok && json.validation) {
+      const valide = json.validation.visaResponsable && json.validation.visaResponsable !== '';
+      if (valide) {
+        setVisaStatus('direction', true, json.validation.dateVisaResponsable);
+        feuilleVerrouillee = true;
+        data.visas.direction = true;
+        data.visas.dateDirection = json.validation.dateVisaResponsable;
+        sauvegarder();
+        majEtatVerrouillage();
+      }
+      // Masquer boutons signer si déjà signé
+      if (json.validation.visaEmploye === 'SIGNÉ') {
+        [document.getElementById('btn-signer'), document.getElementById('btn-signer-action')]
+          .forEach(b => { if(b) b.style.display='none'; });
+      }
+    }
+  } catch(e) {} // silencieux — pas bloquant
+}
+
 // ===== SIGNER EMPLOYÉ =====
 async function signerEmploye() {
   if (feuilleVerrouillee) { afficherToast('Feuille verrouillée — déjà validée'); return; }
@@ -765,9 +833,13 @@ async function signerEmploye() {
       const maintenant = new Date().toLocaleString('fr-FR');
       data.visas.chauffeur=true; data.visas.dateChauffeur=maintenant;
       setVisaStatus('chauffeur', true, maintenant);
-      btns.forEach(b=>{if(b) b.disabled=true;});
+      // Masquer complètement les boutons signer
+      [document.getElementById('btn-signer'), document.getElementById('btn-signer-action')]
+        .forEach(b => { if(b) { b.style.display='none'; b.disabled=true; } });
       sauvegarder();
       afficherToast('Feuille signée et envoyée ✓');
+      // Vérifier si déjà validé par le responsable
+      verifierValidationResponsable();
     } else { afficherToast('Erreur : '+json.erreur); btns.forEach(b=>{if(b){b.textContent='✔ Signer';b.disabled=false;}}); }
   } catch(e) { afficherToast('Erreur réseau'); btns.forEach(b=>{if(b){b.textContent='✔ Signer';b.disabled=false;}}); }
 }
