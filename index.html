@@ -25,7 +25,7 @@
     background-image: repeating-linear-gradient(0deg,transparent,transparent 27px,rgba(0,0,0,0.04) 27px,rgba(0,0,0,0.04) 28px),
       repeating-linear-gradient(90deg,transparent,transparent 27px,rgba(0,0,0,0.02) 27px,rgba(0,0,0,0.02) 28px); }
 
-  /* ===== LOGIN ===== */
+  /* LOGIN */
   #login-screen { display:flex; align-items:center; justify-content:center; min-height:80vh; }
   .login-card { background:var(--blanc); border:2px solid var(--noir); box-shadow:6px 6px 0 var(--noir); padding:40px 32px; max-width:360px; width:100%; text-align:center; }
   .login-titre { font-size:20px; font-weight:600; line-height:1.2; margin-bottom:6px; }
@@ -35,40 +35,34 @@
   .pin-input:focus { background:#ffeaa7; }
   .login-erreur { font-family:var(--font-mono); font-size:11px; color:var(--rouge); margin-bottom:12px; min-height:16px; }
 
-  /* ===== DOCUMENT ===== */
+  /* APP */
   #app-screen { display:none; }
   .document { max-width:960px; margin:0 auto; background:var(--blanc); border:2px solid var(--noir); box-shadow:6px 6px 0 var(--noir); }
 
-  /* ===== BARRE UTILISATEUR ===== */
-  .user-bar { background:var(--accent); color:var(--blanc); padding:10px 20px; display:flex; align-items:center; justify-content:space-between; font-family:var(--font-mono); font-size:11px; letter-spacing:0.5px; }
+  /* BARRE USER */
+  .user-bar { background:var(--accent); color:var(--blanc); padding:10px 20px; display:flex; align-items:center; justify-content:space-between; font-family:var(--font-mono); font-size:11px; }
   .user-bar-info { display:flex; align-items:center; gap:12px; }
   .user-bar-nom { font-weight:600; font-size:13px; }
-  .user-bar-role { background:rgba(255,255,255,0.15); padding:3px 10px; font-size:10px; letter-spacing:1px; text-transform:uppercase; border-radius:2px; }
-  /* Bouton déconnexion — bien visible */
-  .btn-deconnexion {
-    font-family:var(--font-mono); font-size:11px; font-weight:600;
-    background:var(--rouge); border:2px solid #fff;
-    color:#fff; padding:7px 14px; cursor:pointer;
-    letter-spacing:0.5px; text-transform:uppercase;
-    transition:all 0.15s;
-  }
+  .user-bar-role { background:rgba(255,255,255,0.15); padding:3px 10px; font-size:10px; letter-spacing:1px; text-transform:uppercase; }
+  .btn-deconnexion { font-family:var(--font-mono); font-size:11px; font-weight:600; background:var(--rouge); border:2px solid #fff; color:#fff; padding:7px 14px; cursor:pointer; letter-spacing:0.5px; text-transform:uppercase; transition:all 0.15s; }
   .btn-deconnexion:hover { background:#a93226; }
 
-  /* ===== ONGLETS RESPONSABLE ===== */
+  /* ONGLETS */
   .onglets-bar { background:var(--gris-leger); border-bottom:var(--bordure); display:flex; gap:0; overflow-x:auto; -webkit-overflow-scrolling:touch; padding:0 16px; }
   .onglet { font-family:var(--font-mono); font-size:11px; font-weight:600; letter-spacing:0.5px; text-transform:uppercase; padding:10px 16px; border:none; background:transparent; color:var(--gris-fonce); cursor:pointer; border-bottom:3px solid transparent; white-space:nowrap; transition:all 0.15s; }
   .onglet:hover { color:var(--noir); }
   .onglet.actif { color:var(--accent); border-bottom-color:var(--accent); }
 
-  /* ===== EN-TÊTE ===== */
+  /* EN-TÊTE */
   .entete { padding:20px 24px 16px; border-bottom:var(--bordure); display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; }
   .titre-doc { font-size:22px; font-weight:600; letter-spacing:-0.5px; color:var(--noir); line-height:1.1; }
   .semaine-zone { display:flex; gap:32px; align-items:center; flex-wrap:wrap; }
   .semaine-label { font-family:var(--font-mono); font-size:11px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:var(--gris-fonce); margin-bottom:4px; }
   .semaine-input { font-family:var(--font-mono); font-size:14px; border:none; border-bottom:2px solid var(--noir); background:transparent; color:var(--noir); padding:2px 4px; width:130px; outline:none; text-align:center; }
   .semaine-input:focus { background:#ffeaa7; }
+  .semaine-input[readonly] { color:var(--gris-fonce); border-bottom-color:transparent; }
 
-  /* ===== IDENTITÉ ===== */
+  /* IDENTITÉ */
   .identite { display:grid; grid-template-columns:1fr 1.8fr 1fr; border-bottom:var(--bordure); }
   .id-cell { padding:10px 14px; border-right:var(--bordure); }
   .id-cell:last-child { border-right:none; }
@@ -80,16 +74,16 @@
   .id-input:focus { border-bottom-color:var(--noir); background:#ffeaa7; }
   .id-input[readonly] { color:var(--gris-fonce); border-bottom-color:transparent; }
 
-  /* ===== VISA ===== */
+  /* VISA */
   .visa-status { display:inline-flex; align-items:center; gap:6px; font-family:var(--font-mono); font-size:10px; letter-spacing:0.8px; text-transform:uppercase; padding:4px 10px; border:1.5px solid currentColor; }
   .visa-status.attente { color:var(--gris-fonce); }
   .visa-status.valide { color:var(--vert); }
   .dot { width:6px; height:6px; border-radius:50%; background:currentColor; animation:pulse 1.5s infinite; }
   .visa-status.valide .dot { animation:none; }
   @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
-  .visa-date { font-family:var(--font-mono); font-size:10px; color:var(--gris-fonce); margin-top:6px; }
+  .visa-date { font-family:var(--font-mono); font-size:10px; color:var(--gris-fonce); margin-top:6px; min-height:14px; }
 
-  /* ===== TABLEAU ===== */
+  /* TABLEAU */
   .tableau-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
   table { width:100%; border-collapse:collapse; min-width:680px; }
   thead th { background:var(--accent); color:var(--blanc); font-family:var(--font-mono); font-size:10px; font-weight:600; letter-spacing:1.2px; text-transform:uppercase; text-align:center; padding:10px 6px; border-right:1px solid rgba(255,255,255,0.15); white-space:nowrap; }
@@ -103,7 +97,6 @@
   .cell-input { font-family:var(--font-sans); font-size:13px; border:none; background:transparent; color:var(--noir); padding:7px 8px; width:100%; height:36px; outline:none; text-align:center; }
   .cell-input.left { text-align:left; }
   .cell-input:focus { background:#fef3cd; }
-  /* Cellules lecture seule responsable */
   .cell-ro { font-family:var(--font-sans); font-size:13px; color:var(--noir); padding:7px 8px; height:36px; display:flex; align-items:center; justify-content:center; }
   .cell-ro.left { justify-content:flex-start; }
   .jour-select { font-family:var(--font-sans); font-size:12px; font-weight:500; border:none; background:transparent; color:var(--noir); padding:7px 4px; width:100%; height:36px; outline:none; text-align:center; cursor:pointer; -webkit-appearance:none; appearance:none; }
@@ -112,23 +105,26 @@
   .input-nb:focus { background:#fef3cd; }
   .input-nb::-webkit-inner-spin-button,.input-nb::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
   .input-nb[type=number]{-moz-appearance:textfield}
-  .total-cell { font-family:var(--font-mono); font-size:13px; font-weight:600; text-align:center; padding:7px 6px; color:var(--noir); height:36px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.03); }
+  .total-cell { font-family:var(--font-mono); font-size:13px; font-weight:600; text-align:center; padding:7px 6px; height:36px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.03); color:var(--noir); }
   .total-cell.has-value { color:var(--vert); }
   .detail-wrap { display:flex; align-items:center; justify-content:center; gap:3px; padding:0 4px; }
   .detail-wrap input { font-family:var(--font-mono); font-size:12px; border:none; background:transparent; color:var(--noir); width:42px; text-align:center; outline:none; padding:7px 2px; height:36px; }
   .detail-wrap input:focus { background:#fef3cd; }
-  .detail-sep { font-family:var(--font-mono); font-size:13px; color:var(--gris-fonce); line-height:1; }
-  tfoot tr td { background:var(--gris-leger); border-right:var(--bordure-fine); border-top:var(--bordure); padding:8px 6px; font-family:var(--font-mono); font-size:11px; font-weight:600; text-align:center; letter-spacing:0.5px; color:var(--noir); }
-  tfoot .totaux-label { text-align:left; padding-left:12px; letter-spacing:1px; text-transform:uppercase; }
+  .detail-sep { font-family:var(--font-mono); font-size:13px; color:var(--gris-fonce); }
+  tfoot tr td { background:var(--gris-leger); border-right:var(--bordure-fine); border-top:var(--bordure); padding:8px 6px; font-family:var(--font-mono); font-size:11px; font-weight:600; text-align:center; color:var(--noir); }
+  tfoot .totaux-label { text-align:left; padding-left:12px; text-transform:uppercase; }
   tfoot .grand-total { font-size:15px; color:var(--vert); background:#e8f5ee; border-right:none; }
-  tfoot .repas-total,tfoot .nuit-total { font-size:13px; color:var(--accent); }
+  tfoot .repas-total, tfoot .nuit-total { color:var(--accent); }
 
-  /* ===== ACTIONS ===== */
+  /* FEUILLE VERROUILLÉE */
+  .verrou-banner { background:#fff3cd; border-top:2px solid #f0a500; padding:10px 20px; font-family:var(--font-mono); font-size:11px; color:#7d5a00; letter-spacing:0.5px; display:none; }
+
+  /* ACTIONS */
   .actions { padding:16px 20px; display:flex; gap:10px; flex-wrap:wrap; border-top:var(--bordure); background:var(--gris-leger); align-items:center; }
   .btn { font-family:var(--font-mono); font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; padding:10px 18px; border:2px solid var(--noir); cursor:pointer; transition:all 0.15s; background:var(--blanc); color:var(--noir); box-shadow:2px 2px 0 var(--noir); }
   .btn:hover { transform:translate(-1px,-1px); box-shadow:3px 3px 0 var(--noir); }
   .btn:active { transform:translate(1px,1px); box-shadow:1px 1px 0 var(--noir); }
-  .btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; box-shadow:none; }
+  .btn:disabled { opacity:0.4; cursor:not-allowed; transform:none; box-shadow:none; }
   .btn-primary { background:var(--accent); color:var(--blanc); box-shadow:2px 2px 0 #000; }
   .btn-primary:hover { background:var(--accent-light); }
   .btn-success { background:var(--vert); color:white; border-color:var(--vert); box-shadow:2px 2px 0 #000; }
@@ -136,14 +132,12 @@
   .btn-danger { border-color:var(--rouge); color:var(--rouge); }
   .btn-danger:hover { background:var(--rouge); color:white; }
 
-  /* ===== TOAST ===== */
-  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--noir); color:var(--blanc); font-family:var(--font-mono); font-size:12px; letter-spacing:0.5px; padding:12px 20px; border:2px solid var(--blanc); box-shadow:4px 4px 0 rgba(0,0,0,0.3); opacity:0; transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1); z-index:1000; white-space:nowrap; }
+  /* TOAST */
+  .toast { position:fixed; bottom:24px; left:50%; transform:translateX(-50%) translateY(80px); background:var(--noir); color:var(--blanc); font-family:var(--font-mono); font-size:12px; padding:12px 20px; border:2px solid var(--blanc); box-shadow:4px 4px 0 rgba(0,0,0,0.3); opacity:0; transition:all 0.3s cubic-bezier(0.34,1.56,0.64,1); z-index:1000; white-space:nowrap; }
   .toast.show { transform:translateX(-50%) translateY(0); opacity:1; }
-
-  /* ===== CHARGEMENT ===== */
   .chargement { padding:40px; text-align:center; font-family:var(--font-mono); font-size:12px; color:var(--gris-fonce); letter-spacing:1px; }
 
-  /* ===== RESPONSIVE ===== */
+  /* RESPONSIVE */
   @media (max-width:640px) {
     .entete{flex-direction:column;gap:10px} .titre-doc{font-size:16px}
     .identite{grid-template-columns:1fr} .id-cell{border-right:none;border-bottom:var(--bordure-fine)} .id-cell:last-child{border-bottom:none}
@@ -151,14 +145,14 @@
   }
   @media print {
     body{background:white;padding:0} #login-screen{display:none!important}
-    .user-bar,.actions,.onglets-bar,#confirm-overlay{display:none!important}
+    .user-bar,.actions,.onglets-bar,#confirm-overlay,.verrou-banner{display:none!important}
     .document{box-shadow:none;border:1px solid black}
   }
 </style>
 </head>
 <body>
 
-<!-- ===== LOGIN ===== -->
+<!-- LOGIN -->
 <div id="login-screen">
   <div class="login-card">
     <div class="login-titre">FEUILLE DE POINTAGE<br>HR OCCITANIE</div>
@@ -167,17 +161,15 @@
     <input class="pin-input" type="password" inputmode="numeric" id="pin-input"
       maxlength="6" placeholder="••••" onkeydown="if(event.key==='Enter') seConnecter()">
     <div class="login-erreur" id="login-erreur"></div>
-    <button class="btn btn-primary" id="btn-login" onclick="seConnecter()" style="width:100%;font-size:13px;padding:14px;">
-      Se connecter
-    </button>
+    <button class="btn btn-primary" id="btn-login" onclick="seConnecter()" style="width:100%;font-size:13px;padding:14px;">Se connecter</button>
   </div>
 </div>
 
-<!-- ===== APPLICATION ===== -->
+<!-- APPLICATION -->
 <div id="app-screen">
   <div class="document">
 
-    <!-- BARRE UTILISATEUR -->
+    <!-- BARRE USER -->
     <div class="user-bar">
       <div class="user-bar-info">
         <span class="user-bar-nom" id="user-nom">—</span>
@@ -186,23 +178,20 @@
       <button class="btn-deconnexion" onclick="seDeconnecter()">⏻ Déconnexion</button>
     </div>
 
-    <!-- ONGLETS RESPONSABLE (masqués pour employé) -->
-    <div class="onglets-bar" id="onglets-bar" style="display:none;">
-      <!-- généré dynamiquement -->
+    <!-- ONGLETS RESPONSABLE -->
+    <div class="onglets-bar" id="onglets-bar" style="display:none;"></div>
+
+    <!-- BANNIÈRE FEUILLE VERROUILLÉE -->
+    <div class="verrou-banner" id="verrou-banner">
+      🔒 Cette feuille a été validée par le responsable — modification impossible.
     </div>
 
     <!-- EN-TÊTE -->
     <div class="entete">
       <div class="titre-doc">FEUILLE DE POINTAGE<br>HR OCCITANIE</div>
       <div class="semaine-zone">
-        <div>
-          <div class="semaine-label">Semaine du</div>
-          <input type="date" class="semaine-input" id="date-debut" onchange="sauvegarder()">
-        </div>
-        <div>
-          <div class="semaine-label">Au</div>
-          <input type="date" class="semaine-input" id="date-fin" onchange="sauvegarder()">
-        </div>
+        <div><div class="semaine-label">Semaine du</div><input type="date" class="semaine-input" id="date-debut" onchange="sauvegarder()"></div>
+        <div><div class="semaine-label">Au</div><input type="date" class="semaine-input" id="date-fin" onchange="sauvegarder()"></div>
       </div>
     </div>
 
@@ -210,35 +199,24 @@
     <div class="identite">
       <div class="id-cell">
         <div class="id-field">
-          <div class="id-row">
-            <span class="id-row-label">NOM :</span>
-            <input class="id-input" type="text" id="nom" readonly>
-          </div>
-          <div class="id-row">
-            <span class="id-row-label">PRÉNOM :</span>
-            <input class="id-input" type="text" id="prenom" readonly>
-          </div>
-          <!-- ENGIN : masqué pour responsable -->
-          <div class="id-row" id="row-engin">
-            <span class="id-row-label">ENGIN :</span>
-            <input class="id-input" type="text" id="engin" placeholder="—" oninput="sauvegarder()">
-          </div>
+          <div class="id-row"><span class="id-row-label">NOM :</span><input class="id-input" type="text" id="nom" readonly></div>
+          <div class="id-row"><span class="id-row-label">PRÉNOM :</span><input class="id-input" type="text" id="prenom" readonly></div>
+          <div class="id-row" id="row-engin"><span class="id-row-label">ENGIN :</span><input class="id-input" type="text" id="engin" placeholder="—" oninput="sauvegarder()"></div>
         </div>
       </div>
       <div class="id-cell">
         <div class="id-label">Visa chauffeur</div>
         <div style="display:flex;align-items:center;gap:12px;margin-top:6px;flex-wrap:wrap;">
           <span class="visa-status attente" id="visa-chauffeur-status"><span class="dot"></span>En attente</span>
-          <!-- Bouton Signer : employé seulement -->
           <button class="btn btn-success" id="btn-signer" onclick="signerEmploye()" style="font-size:10px;padding:6px 12px;display:none;">✔ Signer</button>
         </div>
         <div class="visa-date" id="date-visa-employe"></div>
       </div>
       <div class="id-cell" style="border-right:none;">
-        <div class="id-label">Visa direction</div>
+        <!-- Titre selon le rôle -->
+        <div class="id-label" id="label-visa-responsable">Visa responsable</div>
         <div style="display:flex;align-items:center;gap:12px;margin-top:6px;flex-wrap:wrap;">
           <span class="visa-status attente" id="visa-direction-status"><span class="dot"></span>En attente</span>
-          <!-- Bouton Valider : responsable seulement -->
           <button class="btn btn-success" id="btn-valider" onclick="validerResponsable()" style="font-size:10px;padding:6px 12px;display:none;">✔ Valider</button>
         </div>
         <div class="visa-date" id="date-visa-direction"></div>
@@ -290,7 +268,7 @@
       <button class="btn" onclick="ajouterLigne()">+ Ligne</button>
       <button class="btn btn-danger" onclick="reinitialiser()">↺ Réinitialiser</button>
       <div style="flex:1"></div>
-      <span style="font-family:var(--font-mono);font-size:10px;color:var(--gris-fonce);letter-spacing:0.5px;" id="save-status">Sauvegarde auto ✓</span>
+      <span style="font-family:var(--font-mono);font-size:10px;color:var(--gris-fonce);" id="save-status">Sauvegarde auto ✓</span>
     </div>
 
     <!-- ACTIONS RESPONSABLE -->
@@ -310,15 +288,25 @@
 <script>
 const JOURS = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche','Férié','—'];
 const NB_LIGNES_DEFAUT = 20;
-const VERSION = 3;
+const VERSION = 4;
 const API_URL = 'https://script.google.com/macros/s/AKfycbwDoRMpv_FUSBKqvEJTV8fzvGupEIQqj-TGBpU73tvuRM8x7516J5xoUW7ySSrg8KJe/exec';
 
 let employe = null;
 let data = { version:VERSION, lignes:[], visas:{chauffeur:false, direction:false} };
-// Pour le responsable : liste des employés et feuille en cours de consultation
-let listeEmployes = [];
-let employeActif = null;
-let donneesActives = null; // lignes chargées depuis le Sheet pour le responsable
+let listeEmployes = [], employeActif = null, donneesActives = null;
+let feuilleVerrouillee = false;
+
+// ===== FORMAT DATE COURT =====
+function formatDateCourte(str) {
+  if (!str) return '';
+  // Gère "30/04/2026 14:32:00" ou "30/04/2026, 14:32:00"
+  const m = str.match(/(\d{2})\/(\d{2})\/(\d{4})[,\s]+(\d{2}):(\d{2})/);
+  if (!m) return str;
+  const jours = ['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'];
+  const d = new Date(`${m[3]}-${m[2]}-${m[1]}T${m[4]}:${m[5]}:00`);
+  const nomJour = jours[d.getDay()];
+  return `Signé le ${nomJour} ${m[1]}/${m[2]} à ${m[4]}h${m[5]}`;
+}
 
 // ===== INIT =====
 function init() {
@@ -329,7 +317,6 @@ function init() {
   afficherLogin();
 }
 
-// ===== LOGIN =====
 function afficherLogin() {
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app-screen').style.display = 'none';
@@ -341,12 +328,7 @@ function afficherAppli() {
   document.getElementById('app-screen').style.display = 'block';
   document.getElementById('user-nom').textContent = employe.prenom + ' ' + employe.nom;
   document.getElementById('user-role').textContent = employe.role;
-
-  if (employe.role === 'responsable') {
-    afficherVueResponsable();
-  } else {
-    afficherVueEmploye();
-  }
+  employe.role === 'responsable' ? afficherVueResponsable() : afficherVueEmploye();
 }
 
 async function seConnecter() {
@@ -378,7 +360,6 @@ function seDeconnecter() {
   employe = null;
   document.getElementById('pin-input').value = '';
   document.getElementById('login-erreur').textContent = '';
-  // Réinitialiser l'interface
   document.getElementById('onglets-bar').style.display = 'none';
   document.getElementById('actions-employe').style.display = 'none';
   document.getElementById('actions-responsable').style.display = 'none';
@@ -393,7 +374,6 @@ function afficherVueEmploye() {
   document.getElementById('actions-employe').style.display = 'flex';
   document.getElementById('actions-responsable').style.display = 'none';
   document.getElementById('onglets-bar').style.display = 'none';
-  // Dates non modifiables pour le responsable mais ok pour employé
   document.getElementById('date-debut').readOnly = false;
   document.getElementById('date-fin').readOnly = false;
   chargerDonneesLocales();
@@ -424,16 +404,38 @@ function chargerDonneesLocales() {
   document.getElementById('date-debut').value = data['date-debut'];
   document.getElementById('date-fin').value = data['date-fin'];
 
+  feuilleVerrouillee = data.visas && data.visas.direction;
+  majEtatVerrouillage();
+
   if (data.visas && data.visas.chauffeur) setVisaStatus('chauffeur', true, data.visas.dateChauffeur);
   else setVisaStatus('chauffeur', false);
-  setVisaStatus('direction', false); // l'employé ne voit pas le statut direction en temps réel
+  if (data.visas && data.visas.direction) setVisaStatus('direction', true, data.visas.dateDirection);
+  else setVisaStatus('direction', false);
 
-  renderTableau(false);
+  renderTableau();
+}
+
+function majEtatVerrouillage() {
+  const banner = document.getElementById('verrou-banner');
+  const btnSigner = document.getElementById('btn-signer');
+  const btnSignerAction = document.getElementById('btn-signer-action');
+  const btnAjout = document.querySelector('#actions-employe .btn:not(.btn-success):not(.btn-primary):not(.btn-danger)');
+
+  if (feuilleVerrouillee) {
+    banner.style.display = 'block';
+    if (btnSigner) btnSigner.disabled = true;
+    if (btnSignerAction) btnSignerAction.disabled = true;
+    // Désactiver tous les inputs du tableau
+    document.querySelectorAll('#tbody input, #tbody select').forEach(el => el.disabled = true);
+    document.getElementById('engin').readOnly = true;
+  } else {
+    banner.style.display = 'none';
+  }
 }
 
 // ===== VUE RESPONSABLE =====
 async function afficherVueResponsable() {
-  document.getElementById('row-engin').style.display = 'none';
+  document.getElementById('row-engin').style.display = 'flex';
   document.getElementById('btn-signer').style.display = 'none';
   document.getElementById('btn-valider').style.display = 'inline-flex';
   document.getElementById('actions-employe').style.display = 'none';
@@ -442,19 +444,18 @@ async function afficherVueResponsable() {
   document.getElementById('date-debut').readOnly = true;
   document.getElementById('date-fin').readOnly = true;
 
-  // Charger la liste des employés depuis le Sheet
   const tbody = document.getElementById('tbody');
   tbody.innerHTML = '<tr><td colspan="9"><div class="chargement">Chargement des feuilles...</div></td></tr>';
 
   try {
     const res = await fetch(`${API_URL}?action=getEmployes`);
     const json = await res.json();
-    if (json.ok) {
+    if (json.ok && json.employes.length > 0) {
       listeEmployes = json.employes;
       afficherOnglets();
-      if (listeEmployes.length > 0) chargerFeuille(listeEmployes[0]);
+      chargerFeuille(listeEmployes[0]);
     } else {
-      afficherToast('Erreur chargement : ' + json.erreur);
+      tbody.innerHTML = '<tr><td colspan="9"><div class="chargement">Aucun employé trouvé</div></td></tr>';
     }
   } catch(e) { afficherToast('Erreur réseau'); }
 }
@@ -480,6 +481,10 @@ async function chargerFeuille(emp) {
   document.getElementById('nom').value = emp.nom;
   document.getElementById('prenom').value = emp.prenom;
   document.getElementById('engin').value = '';
+  setVisaStatus('chauffeur', false);
+  setVisaStatus('direction', false);
+  document.getElementById('date-visa-employe').textContent = '';
+  document.getElementById('date-visa-direction').textContent = '';
 
   const semaineDu = getSemaineCourante();
   document.getElementById('date-debut').value = semaineDu;
@@ -488,40 +493,67 @@ async function chargerFeuille(emp) {
 
   const tbody = document.getElementById('tbody');
   tbody.innerHTML = '<tr><td colspan="9"><div class="chargement">Chargement...</div></td></tr>';
-  setVisaStatus('chauffeur', false); setVisaStatus('direction', false);
-  document.getElementById('date-visa-employe').textContent = '';
-  document.getElementById('date-visa-direction').textContent = '';
+
+  // Masquer boutons valider pendant chargement
+  ['btn-valider','btn-valider-action'].forEach(id => {
+    const b = document.getElementById(id); if(b) { b.style.display='none'; b.disabled=true; }
+  });
 
   try {
     const res = await fetch(`${API_URL}?action=getSemaine&idEmploye=${emp.id}&semaine=${semaineDu}`);
     const json = await res.json();
     if (json.ok) {
       donneesActives = json.lignes;
+
+      // Récupérer l'engin depuis la première ligne
+      if (json.lignes && json.lignes.length > 0) {
+        document.getElementById('engin').value = json.lignes[0].ENGIN || '';
+      }
+
+      const dejaValide = json.validation && json.validation.visaResponsable && json.validation.visaResponsable !== '';
+      const employeSigne = json.validation && json.validation.visaEmploye === 'SIGNÉ';
+
       // Visa chauffeur
-      if (json.validation && json.validation.visaEmploye)
-        setVisaStatus('chauffeur', true, json.validation.dateVisaEmploye);
-      // Visa direction
-      if (json.validation && json.validation.visaResponsable)
-        setVisaStatus('direction', true, json.validation.dateVisaResponsable);
+      if (employeSigne) setVisaStatus('chauffeur', true, json.validation.dateVisaEmploye);
+      // Visa responsable
+      if (dejaValide) setVisaStatus('direction', true, json.validation.dateVisaResponsable);
+
       renderTableauLecture(json.lignes);
-      // Désactiver valider si déjà validé ou pas encore signé par employé
-      const btnVal = document.getElementById('btn-valider');
-      const btnValAction = document.getElementById('btn-valider-action');
-      const dejaValide = json.validation && json.validation.visaResponsable;
-      const employeNonSigne = !json.validation || !json.validation.visaEmploye;
-      [btnVal, btnValAction].forEach(b => { b.disabled = dejaValide || employeNonSigne; });
-      if (employeNonSigne) afficherToast("L'employé n'a pas encore signé");
-    } else { afficherToast('Aucune feuille trouvée pour cette semaine'); tbody.innerHTML = ''; }
+
+      // Bouton valider : visible seulement si employé a signé et pas encore validé
+      ['btn-valider','btn-valider-action'].forEach(id => {
+        const b = document.getElementById(id);
+        if (!b) return;
+        if (dejaValide) {
+          b.style.display = 'none'; // masqué une fois validé
+        } else if (employeSigne) {
+          b.style.display = 'inline-flex';
+          b.disabled = false;
+          b.textContent = id === 'btn-valider' ? '✔ Valider' : '✔ Valider la feuille';
+        } else {
+          b.style.display = 'inline-flex';
+          b.disabled = true;
+          b.textContent = id === 'btn-valider' ? '✔ Valider' : '✔ Valider la feuille';
+        }
+      });
+
+      if (!employeSigne) afficherToast("En attente de la signature du chauffeur");
+
+    } else {
+      tbody.innerHTML = '<tr><td colspan="9"><div class="chargement">Aucune feuille pour cette semaine</div></td></tr>';
+      updateTotauxVides();
+    }
   } catch(e) { afficherToast('Erreur réseau'); tbody.innerHTML = ''; }
 }
 
-// Tableau en lecture seule pour le responsable
+// ===== RENDER LECTURE (responsable) =====
 function renderTableauLecture(lignes) {
   const tbody = document.getElementById('tbody');
   tbody.innerHTML = '';
   let totalMin=0, totalRepas=0, totalNuitMin=0;
+
   if (!lignes || lignes.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;padding:20px;font-family:var(--font-mono);font-size:12px;color:var(--gris-fonce);">Aucune ligne pour cette semaine</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="9"><div class="chargement">Aucune ligne pour cette semaine</div></td></tr>';
   } else {
     lignes.forEach(l => {
       const tr = document.createElement('tr');
@@ -538,7 +570,6 @@ function renderTableauLecture(lignes) {
         <td><div class="total-cell has-value">${l.TOTAL_HEURES||'—'}</div></td>
       `;
       tbody.appendChild(tr);
-      // Totaux
       totalMin += parseHeure(l.TOTAL_HEURES) || 0;
       totalRepas += parseInt(l.REPAS)||0;
       totalNuitMin += parseHeure(l.NUIT)||0;
@@ -549,13 +580,19 @@ function renderTableauLecture(lignes) {
   document.getElementById('total-nuit').textContent = formatHeures(totalNuitMin)||'—';
 }
 
+function updateTotauxVides() {
+  document.getElementById('grand-total').textContent = '—';
+  document.getElementById('total-repas').textContent = '—';
+  document.getElementById('total-nuit').textContent = '—';
+}
+
 // ===== VALIDATION RESPONSABLE =====
 async function validerResponsable() {
   if (!employeActif) { afficherToast('Aucun employé sélectionné'); return; }
   const semaineDu = document.getElementById('date-debut').value;
-  const btnVal = document.getElementById('btn-valider');
-  const btnValAction = document.getElementById('btn-valider-action');
-  [btnVal, btnValAction].forEach(b => { b.textContent='...'; b.disabled=true; });
+  ['btn-valider','btn-valider-action'].forEach(id => {
+    const b = document.getElementById(id); if(b){b.textContent='...';b.disabled=true;}
+  });
   try {
     const res = await fetch(API_URL, {
       method:'POST',
@@ -565,15 +602,27 @@ async function validerResponsable() {
     if (json.ok) {
       const maintenant = new Date().toLocaleString('fr-FR');
       setVisaStatus('direction', true, maintenant);
-      [btnVal, btnValAction].forEach(b => { b.disabled=true; });
+      // Masquer les boutons valider — plus utile
+      ['btn-valider','btn-valider-action'].forEach(id => {
+        const b = document.getElementById(id); if(b) b.style.display='none';
+      });
       afficherToast('Feuille validée ✓');
-    } else { afficherToast('Erreur : ' + json.erreur); [btnVal, btnValAction].forEach(b => b.disabled=false); }
-  } catch(e) { afficherToast('Erreur réseau'); [btnVal, btnValAction].forEach(b => b.disabled=false); }
-  [btnVal, btnValAction].forEach(b => b.textContent='✔ Valider');
+    } else {
+      afficherToast('Erreur : ' + json.erreur);
+      ['btn-valider','btn-valider-action'].forEach(id => {
+        const b = document.getElementById(id); if(b){b.disabled=false;b.textContent=id==='btn-valider'?'✔ Valider':'✔ Valider la feuille';}
+      });
+    }
+  } catch(e) {
+    afficherToast('Erreur réseau');
+    ['btn-valider','btn-valider-action'].forEach(id => {
+      const b = document.getElementById(id); if(b){b.disabled=false;b.textContent=id==='btn-valider'?'✔ Valider':'✔ Valider la feuille';}
+    });
+  }
 }
 
 // ===== RENDER EMPLOYÉ (saisie) =====
-function renderTableau(lectureSeule) {
+function renderTableau() {
   const tbody = document.getElementById('tbody');
   tbody.innerHTML = '';
   data.lignes.forEach((ligne, i) => {
@@ -605,9 +654,11 @@ function renderTableau(lectureSeule) {
     tbody.appendChild(tr);
   });
   updateTotaux();
+  if (feuilleVerrouillee) majEtatVerrouillage();
 }
 
 function updateLigne(i, champ, val) {
+  if (feuilleVerrouillee) return;
   data.lignes[i][champ] = val;
   const tr = document.getElementById('tbody').rows[i];
   const min = calculerMinutes(data.lignes[i]);
@@ -620,7 +671,6 @@ function updateLigne(i, champ, val) {
 // ===== CALCULS =====
 function parseHeure(str) {
   if (!str) return null;
-  // Format Xh00 (venant des totaux)
   str = String(str).trim().replace('h',':').replace('.',':');
   const m = str.match(/^(\d{1,2}):?(\d{2})?$/);
   if (!m) return null;
@@ -634,7 +684,7 @@ function calculerMinutes(ligne) {
   const pause=parseHeure(ligne.pause)||0, nuit=parseHeure(ligne.nuit)||0;
   let heuresJour=0;
   if (debut!==null && fin!==null) {
-    let diff=fin-debut; if (diff<0) diff+=24*60;
+    let diff=fin-debut; if(diff<0) diff+=24*60;
     heuresJour=Math.max(0,diff-pause);
   }
   return heuresJour+nuit;
@@ -665,7 +715,7 @@ function getSemaineCourante() { return toISO(getLundi(new Date())); }
 
 // ===== SAUVEGARDE LOCALE =====
 function sauvegarder() {
-  if (employe.role==='responsable') return;
+  if (!employe || employe.role==='responsable' || feuilleVerrouillee) return;
   data['engin'] = document.getElementById('engin').value;
   data['date-debut'] = document.getElementById('date-debut').value;
   data['date-fin'] = document.getElementById('date-fin').value;
@@ -686,18 +736,19 @@ async function envoyerGoogleSheets() {
       method:'POST',
       body: JSON.stringify({
         action:'sauvegarder', idEmploye:employe.id, nom:employe.nom, prenom:employe.prenom,
+        engin: document.getElementById('engin').value || '',
         semaineDu, semaineAu:document.getElementById('date-fin').value,
         lignes:lignesNonVides.map(l=>({...l, total:formatHeures(calculerMinutes(l))}))
       })
     });
     const json = await res.json();
-    if (json.ok) { return true; }
-    else { afficherToast('Erreur : '+json.erreur); return false; }
+    return json.ok;
   } catch(e) { afficherToast('Erreur réseau — réessaie'); return false; }
 }
 
 // ===== SIGNER EMPLOYÉ =====
 async function signerEmploye() {
+  if (feuilleVerrouillee) { afficherToast('Feuille verrouillée — déjà validée'); return; }
   const semaineDu = document.getElementById('date-debut').value;
   if (!semaineDu) { afficherToast('Renseigne la date de début'); return; }
   const btns = [document.getElementById('btn-signer'), document.getElementById('btn-signer-action')];
@@ -717,20 +768,17 @@ async function signerEmploye() {
       btns.forEach(b=>{if(b) b.disabled=true;});
       sauvegarder();
       afficherToast('Feuille signée et envoyée ✓');
-    } else { afficherToast('Erreur : '+json.erreur); btns.forEach(b=>{if(b) b.disabled=false;}); }
-  } catch(e) { afficherToast('Erreur réseau — réessaie'); btns.forEach(b=>{if(b) b.disabled=false;}); }
-  btns.forEach(b=>{if(b) b.textContent='✔ Signer';});
+    } else { afficherToast('Erreur : '+json.erreur); btns.forEach(b=>{if(b){b.textContent='✔ Signer';b.disabled=false;}}); }
+  } catch(e) { afficherToast('Erreur réseau'); btns.forEach(b=>{if(b){b.textContent='✔ Signer';b.disabled=false;}}); }
 }
 
-function setVisaStatus(type, val, date) {
+function setVisaStatus(type, val, dateStr) {
   const el = document.getElementById(`visa-${type}-status`);
   if (!el) return;
   if (val) { el.className='visa-status valide'; el.innerHTML='<span class="dot"></span>Signé'; }
   else { el.className='visa-status attente'; el.innerHTML='<span class="dot"></span>En attente'; }
-  if (date) {
-    const dateEl = document.getElementById(type==='chauffeur'?'date-visa-employe':'date-visa-direction');
-    if (dateEl) dateEl.textContent = date;
-  }
+  const dateEl = document.getElementById(type==='chauffeur'?'date-visa-employe':'date-visa-direction');
+  if (dateEl) dateEl.textContent = val && dateStr ? formatDateCourte(dateStr) : '';
 }
 
 // ===== ACTIONS EMPLOYÉ =====
@@ -739,78 +787,70 @@ function creerLigneVide() {
 }
 
 function ajouterLigne() {
+  if (feuilleVerrouillee) return;
   data.lignes.push(creerLigneVide());
-  renderTableau(false); sauvegarder(); afficherToast('Ligne ajoutée');
+  renderTableau(); sauvegarder(); afficherToast('Ligne ajoutée');
 }
 
-function reinitialiser() { document.getElementById('confirm-overlay').style.display='block'; }
+function reinitialiser() {
+  if (feuilleVerrouillee) { afficherToast('Feuille verrouillée — déjà validée'); return; }
+  document.getElementById('confirm-overlay').style.display = 'block';
+}
 
 function confirmerReinit(oui) {
-  document.getElementById('confirm-overlay').style.display='none';
+  document.getElementById('confirm-overlay').style.display = 'none';
   if (!oui) return;
+  feuilleVerrouillee = false;
   data = {version:VERSION, lignes:Array.from({length:NB_LIGNES_DEFAUT},()=>creerLigneVide()), visas:{chauffeur:false,direction:false}};
   document.getElementById('engin').value='';
+  document.getElementById('engin').readOnly=false;
   const lundi=getLundi(new Date()), dim=new Date(lundi); dim.setDate(lundi.getDate()+6);
   document.getElementById('date-debut').value=data['date-debut']=toISO(lundi);
   document.getElementById('date-fin').value=data['date-fin']=toISO(dim);
   setVisaStatus('chauffeur',false); setVisaStatus('direction',false);
-  document.getElementById('date-visa-employe').textContent='';
-  document.getElementById('date-visa-direction').textContent='';
-  // Réactiver le bouton signer
-  [document.getElementById('btn-signer'), document.getElementById('btn-signer-action')].forEach(b=>{if(b) b.disabled=false;});
-  renderTableau(false); sauvegarder(); afficherToast('Feuille réinitialisée');
+  document.getElementById('verrou-banner').style.display='none';
+  [document.getElementById('btn-signer'),document.getElementById('btn-signer-action')].forEach(b=>{if(b) b.disabled=false;});
+  renderTableau(); sauvegarder(); afficherToast('Feuille réinitialisée');
 }
 
-// ===== EXPORT CSV (commun) =====
-function construireCSV(lignes, nomEmp, prenomEmp, engin, debut, fin, validation) {
+// ===== EXPORT =====
+function construireCSV(lignes, nomEmp, prenomEmp, engin, debut, fin) {
   let csv = 'FEUILLE DE POINTAGE HR OCCITANIE\n';
   csv += `Semaine du;${debut};au;${fin}\n`;
   csv += `Nom;${nomEmp};Prénom;${prenomEmp};Engin;${engin||''}\n\n`;
-  csv += 'JOUR;N° BL;CHANTIERS / CLIENTS;N° FDM;HEURE DÉBUT;HEURE FIN;PAUSE;TOTAL HEURES;REPAS;NUIT\n';
+  csv += 'JOUR;N° BL;CHANTIERS / CLIENTS;N° FDM;H. DÉBUT;H. FIN;PAUSE;TOTAL HEURES;REPAS;NUIT\n';
   lignes.forEach(l => {
-    if (!l.jour && !l.chantier && !l.hdebut && !l.JOUR && !l.CHANTIER) return;
-    // Support des deux formats (employé local vs Sheet)
-    const jour=l.jour||l.JOUR||'', bl=l.bl||l.N_BL||'', chantier=l.chantier||l.CHANTIER||'';
-    const fdm=l.fdm||l.N_FDM||'', hdebut=l.hdebut||l.H_DEBUT||'', hfin=l.hfin||l.H_FIN||'';
-    const pause=l.pause||l.PAUSE||'', repas=l.repas||l.REPAS||0, nuit=l.nuit||l.NUIT||'';
-    const total=l.total||l.TOTAL_HEURES||formatHeures(calculerMinutes(l));
-    csv += `${jour};${bl};${chantier};${fdm};${hdebut};${hfin};${pause};${total};${repas};${nuit}\n`;
+    if (!l.JOUR && !l.jour && !l.CHANTIER && !l.chantier) return;
+    csv += `${l.JOUR||l.jour||''};${l.N_BL||l.bl||''};${l.CHANTIER||l.chantier||''};${l.N_FDM||l.fdm||''};${l.H_DEBUT||l.hdebut||''};${l.H_FIN||l.hfin||''};${l.PAUSE||l.pause||''};${l.TOTAL_HEURES||formatHeures(calculerMinutes(l))};${l.REPAS||l.repas||0};${l.NUIT||l.nuit||''}\n`;
   });
-  let totalMin=0, tr=0, tnMin=0;
-  lignes.forEach(l=>{totalMin+=calculerMinutes(l)||parseHeure(l.TOTAL_HEURES)||0; tr+=parseInt(l.repas||l.REPAS)||0; tnMin+=parseHeure(l.nuit||l.NUIT)||0;});
-  csv += `\nTOTAUX;;;;;;;;;${formatHeures(totalMin)};${tr};${formatHeures(tnMin)}\n`;
-  if (validation) csv += `\nVisa chauffeur;${validation.visaEmploye||'En attente'};${validation.dateVisaEmploye||''}\nVisa direction;${validation.visaResponsable||'En attente'};${validation.dateVisaResponsable||''}\n`;
   return csv;
 }
 
 function exportCSV() {
-  const estResponsable = employe.role==='responsable';
-  const lignes = estResponsable ? (donneesActives||[]) : data.lignes;
-  const nomEmp = estResponsable ? employeActif.nom : employe.nom;
-  const prenomEmp = estResponsable ? employeActif.prenom : employe.prenom;
+  const estResp = employe.role==='responsable';
+  const lignes = estResp ? (donneesActives||[]) : data.lignes;
+  const nomEmp = estResp ? employeActif.nom : employe.nom;
+  const prenomEmp = estResp ? employeActif.prenom : employe.prenom;
   const debut = document.getElementById('date-debut').value||'';
   const fin = document.getElementById('date-fin').value||'';
   const engin = document.getElementById('engin').value||'';
-  const csv = construireCSV(lignes, nomEmp, prenomEmp, engin, debut, fin, null);
+  const csv = construireCSV(lignes, nomEmp, prenomEmp, engin, debut, fin);
   const blob = new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8;'});
   const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href=url; a.download=`pointage_${nomEmp}_${prenomEmp}_${debut}.csv`; a.click();
+  const a = document.createElement('a'); a.href=url; a.download=`pointage_${nomEmp}_${prenomEmp}_${debut}.csv`; a.click();
   URL.revokeObjectURL(url); afficherToast('CSV exporté');
 }
 
-// ===== EXPORT EXCEL =====
 function exportExcel() {
   if (!window.XLSX) { afficherToast('Bibliothèque Excel non chargée'); return; }
-  const estResponsable = employe.role==='responsable';
-  const lignes = estResponsable ? (donneesActives||[]) : data.lignes;
-  const nomEmp = estResponsable ? employeActif.nom : employe.nom;
-  const prenomEmp = estResponsable ? employeActif.prenom : employe.prenom;
+  const estResp = employe.role==='responsable';
+  const lignes = estResp ? (donneesActives||[]) : data.lignes;
+  const nomEmp = estResp ? employeActif.nom : employe.nom;
+  const prenomEmp = estResp ? employeActif.prenom : employe.prenom;
   const debut = document.getElementById('date-debut').value||'';
   const fin = document.getElementById('date-fin').value||'';
   const engin = document.getElementById('engin').value||'';
 
-  // Construire les données pour SheetJS
   const wsData = [
     ['FEUILLE DE POINTAGE HR OCCITANIE'],
     [`Semaine du : ${debut}`, '', `au : ${fin}`],
@@ -818,24 +858,19 @@ function exportExcel() {
     [],
     ['JOUR','N° BL','CHANTIERS / CLIENTS','N° FDM','H. DÉBUT','H. FIN','PAUSE','TOTAL HEURES','REPAS','NUIT']
   ];
-
+  let totalMin=0, totalRepas=0, totalNuitMin=0;
   lignes.forEach(l => {
-    if (!l.jour && !l.chantier && !l.hdebut && !l.JOUR && !l.CHANTIER) return;
-    wsData.push([
-      l.jour||l.JOUR||'', l.bl||l.N_BL||'', l.chantier||l.CHANTIER||'',
-      l.fdm||l.N_FDM||'', l.hdebut||l.H_DEBUT||'', l.hfin||l.H_FIN||'',
-      l.pause||l.PAUSE||'', l.total||l.TOTAL_HEURES||formatHeures(calculerMinutes(l)),
-      l.repas||l.REPAS||0, l.nuit||l.NUIT||''
-    ]);
+    if (!l.JOUR && !l.jour && !l.CHANTIER && !l.chantier) return;
+    const total = l.TOTAL_HEURES || formatHeures(calculerMinutes(l));
+    wsData.push([l.JOUR||l.jour||'', l.N_BL||l.bl||'', l.CHANTIER||l.chantier||'', l.N_FDM||l.fdm||'', l.H_DEBUT||l.hdebut||'', l.H_FIN||l.hfin||'', l.PAUSE||l.pause||'', total, l.REPAS||l.repas||0, l.NUIT||l.nuit||'']);
+    totalMin += parseHeure(total)||calculerMinutes(l)||0;
+    totalRepas += parseInt(l.REPAS||l.repas)||0;
+    totalNuitMin += parseHeure(l.NUIT||l.nuit)||0;
   });
-
-  let totalMin=0, tr=0, tnMin=0;
-  lignes.forEach(l=>{totalMin+=calculerMinutes(l)||parseHeure(l.TOTAL_HEURES)||0; tr+=parseInt(l.repas||l.REPAS)||0; tnMin+=parseHeure(l.nuit||l.NUIT)||0;});
   wsData.push([]);
-  wsData.push(['TOTAUX','','','','','','',formatHeures(totalMin),tr,formatHeures(tnMin)]);
+  wsData.push(['TOTAUX','','','','','','',formatHeures(totalMin),totalRepas,formatHeures(totalNuitMin)]);
 
   const ws = XLSX.utils.aoa_to_sheet(wsData);
-  // Largeurs colonnes
   ws['!cols'] = [{wch:12},{wch:8},{wch:30},{wch:8},{wch:10},{wch:10},{wch:8},{wch:12},{wch:7},{wch:10}];
   const wb = XLSX.utils.book_new();
   XLSX.utils.book_append_sheet(wb, ws, 'Pointage');
@@ -845,11 +880,10 @@ function exportExcel() {
 
 function imprimerFeuille() { window.print(); }
 
-// ===== TOAST =====
 function afficherToast(msg) {
   const t = document.getElementById('toast');
   t.textContent=msg; t.classList.add('show');
-  setTimeout(()=>t.classList.remove('show'), 2500);
+  setTimeout(()=>t.classList.remove('show'), 2800);
 }
 
 document.addEventListener('DOMContentLoaded', init);
