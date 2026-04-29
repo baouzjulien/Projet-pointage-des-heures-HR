@@ -66,6 +66,10 @@
   .semaine-input { font-family:var(--font-mono); font-size:14px; border:none; border-bottom:2px solid var(--noir); background:transparent; color:var(--noir); padding:2px 4px; width:130px; outline:none; text-align:center; }
   .semaine-input:focus { background:#ffeaa7; }
   .semaine-input[readonly] { color:var(--gris-fonce); border-bottom-color:transparent; }
+  .semaine-nav { display:flex; align-items:center; gap:6px; flex-wrap:wrap; }
+  .btn-semaine { font-family:var(--font-mono); font-size:10px; font-weight:600; letter-spacing:0.6px; text-transform:uppercase; background:var(--blanc); border:1.5px solid var(--noir); color:var(--noir); padding:7px 10px; cursor:pointer; box-shadow:2px 2px 0 var(--noir); transition:all 0.15s; }
+  .btn-semaine:hover { transform:translate(-1px,-1px); box-shadow:3px 3px 0 var(--noir); }
+  .btn-semaine:active { transform:translate(1px,1px); box-shadow:1px 1px 0 var(--noir); }
 
   /* IDENTITÉ */
   .identite { display:grid; grid-template-columns:1fr 1.8fr 1fr; border-bottom:var(--bordure); }
@@ -197,6 +201,11 @@
       <div class="semaine-zone">
         <div><div class="semaine-label">Semaine du</div><input type="date" class="semaine-input" id="date-debut" onchange="sauvegarder()"></div>
         <div><div class="semaine-label">Au</div><input type="date" class="semaine-input" id="date-fin" onchange="sauvegarder()"></div>
+        <div class="semaine-nav">
+          <button class="btn-semaine" onclick="changerSemaine(-1)" title="Semaine précédente">←</button>
+          <button class="btn-semaine" onclick="allerSemaineCourante()">Semaine courante</button>
+          <button class="btn-semaine" onclick="changerSemaine(1)" title="Semaine suivante">→</button>
+        </div>
       </div>
     </div>
 
@@ -300,8 +309,15 @@ let employe = null;
 let data = { version:VERSION, lignes:[], visas:{chauffeur:false, direction:false} };
 let listeEmployes = [], employeActif = null, donneesActives = null;
 let feuilleVerrouillee = false;
+let semaineAffichee = null;
 
 // ===== FORMAT DATE COURT =====
+function echapperHTML(val) {
+  return String(val ?? '').replace(/[&<>"']/g, c => ({
+    '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'
+  }[c]));
+}
+
 function formatDateCourte(str) {
   if (!str) return '';
   const jours = ['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'];
@@ -404,17 +420,30 @@ function seDeconnecter() {
 function afficherVueEmploye() {
   document.getElementById('row-engin').style.display = 'flex';
   document.getElementById('btn-signer').style.display = 'inline-flex';
+  document.getElementById('btn-signer-action').style.display = 'inline-flex';
   document.getElementById('btn-valider').style.display = 'none';
   document.getElementById('actions-employe').style.display = 'flex';
   document.getElementById('actions-responsable').style.display = 'none';
   document.getElementById('onglets-bar').style.display = 'none';
   document.getElementById('date-debut').readOnly = false;
   document.getElementById('date-fin').readOnly = false;
-  chargerDonneesLocales();
+  chargerDonneesLocales(getSemaineCourante());
 }
 
-function chargerDonneesLocales() {
-  const saved = localStorage.getItem('pointage_' + employe.id);
+function getClePointage(semaine) {
+  return 'pointage_' + employe.id + '_' + semaine;
+}
+
+function chargerDonneesLocales(semaine) {
+  semaine = semaine || document.getElementById('date-debut').value || getSemaineCourante();
+  semaineAffichee = semaine;
+  feuilleVerrouillee = false;
+  document.getElementById('engin').readOnly = false;
+  [document.getElementById('btn-signer'), document.getElementById('btn-signer-action')]
+    .forEach(b => { if(b) { b.style.display='inline-flex'; b.disabled=false; b.textContent = b.id === 'btn-signer' ? '✔ Signer' : '✔ Signer & Envoyer'; } });
+
+  const saved = localStorage.getItem(getClePointage(semaine))
+    || (semaine === getSemaineCourante() ? localStorage.getItem('pointage_' + employe.id) : null);
   if (saved) {
     try {
       const parsed = JSON.parse(saved);
@@ -429,14 +458,11 @@ function chargerDonneesLocales() {
   document.getElementById('nom').value = employe.nom;
   document.getElementById('prenom').value = employe.prenom;
   if (data['engin']) document.getElementById('engin').value = data['engin'];
+  else document.getElementById('engin').value = '';
 
-  if (!data['date-debut']) {
-    const lundi = getLundi(new Date()), dim = new Date(lundi);
-    dim.setDate(lundi.getDate()+6);
-    data['date-debut'] = toISO(lundi); data['date-fin'] = toISO(dim);
-  }
-  document.getElementById('date-debut').value = data['date-debut'];
-  document.getElementById('date-fin').value = data['date-fin'];
+  definirSemaine(semaine);
+  data['date-debut'] = semaine;
+  data['date-fin'] = document.getElementById('date-fin').value;
 
   feuilleVerrouillee = data.visas && data.visas.direction;
   majEtatVerrouillage();
@@ -461,17 +487,26 @@ function majEtatVerrouillage() {
   const banner = document.getElementById('verrou-banner');
   const btnSigner = document.getElementById('btn-signer');
   const btnSignerAction = document.getElementById('btn-signer-action');
-  const btnAjout = document.querySelector('#actions-employe .btn:not(.btn-success):not(.btn-primary):not(.btn-danger)');
+  const btnAjout = document.querySelector('#actions-employe button[onclick="ajouterLigne()"]');
+  const btnReinit = document.querySelector('#actions-employe button[onclick="reinitialiser()"]');
 
   if (feuilleVerrouillee) {
     banner.style.display = 'block';
     if (btnSigner) btnSigner.disabled = true;
     if (btnSignerAction) btnSignerAction.disabled = true;
+    if (btnAjout) btnAjout.disabled = true;
+    if (btnReinit) btnReinit.disabled = true;
     // Désactiver tous les inputs du tableau
     document.querySelectorAll('#tbody input, #tbody select').forEach(el => el.disabled = true);
     document.getElementById('engin').readOnly = true;
   } else {
     banner.style.display = 'none';
+    if (btnSigner) btnSigner.disabled = false;
+    if (btnSignerAction) btnSignerAction.disabled = false;
+    if (btnAjout) btnAjout.disabled = false;
+    if (btnReinit) btnReinit.disabled = false;
+    document.querySelectorAll('#tbody input, #tbody select').forEach(el => el.disabled = false);
+    document.getElementById('engin').readOnly = false;
   }
 }
 
@@ -495,7 +530,7 @@ async function afficherVueResponsable() {
     if (json.ok && json.employes.length > 0) {
       listeEmployes = json.employes;
       afficherOnglets();
-      chargerFeuille(listeEmployes[0]);
+      chargerFeuille(listeEmployes[0], getSemaineCourante());
     } else {
       tbody.innerHTML = '<tr><td colspan="9"><div class="chargement">Aucun employé trouvé</div></td></tr>';
     }
@@ -512,13 +547,13 @@ function afficherOnglets() {
     btn.onclick = () => {
       document.querySelectorAll('.onglet').forEach(o => o.classList.remove('actif'));
       btn.classList.add('actif');
-      chargerFeuille(emp);
+      chargerFeuille(emp, semaineAffichee || getSemaineCourante());
     };
     bar.appendChild(btn);
   });
 }
 
-async function chargerFeuille(emp) {
+async function chargerFeuille(emp, semaineDu = getSemaineCourante()) {
   employeActif = emp;
   document.getElementById('nom').value = emp.nom;
   document.getElementById('prenom').value = emp.prenom;
@@ -528,10 +563,8 @@ async function chargerFeuille(emp) {
   document.getElementById('date-visa-employe').textContent = '';
   document.getElementById('date-visa-direction').textContent = '';
 
-  const semaineDu = getSemaineCourante();
-  document.getElementById('date-debut').value = semaineDu;
-  const dim = new Date(semaineDu); dim.setDate(dim.getDate()+6);
-  document.getElementById('date-fin').value = toISO(dim);
+  definirSemaine(semaineDu);
+  document.getElementById('verrou-banner').style.display = 'none';
 
   const tbody = document.getElementById('tbody');
   tbody.innerHTML = '<tr><td colspan="9"><div class="chargement">Chargement...</div></td></tr>';
@@ -601,15 +634,15 @@ function renderTableauLecture(lignes) {
       const tr = document.createElement('tr');
       const detail = l.H_DEBUT && l.H_FIN ? `${l.H_DEBUT} → ${l.H_FIN}` : '—';
       tr.innerHTML = `
-        <td><div class="cell-ro">${l.JOUR||'—'}</div></td>
-        <td><div class="cell-ro">${l.N_BL||'—'}</div></td>
-        <td><div class="cell-ro left">${l.CHANTIER||'—'}</div></td>
-        <td><div class="cell-ro">${l.N_FDM||'—'}</div></td>
-        <td><div class="cell-ro">${detail}</div></td>
-        <td><div class="cell-ro">${l.PAUSE||'—'}</div></td>
-        <td><div class="cell-ro">${l.REPAS||'0'}</div></td>
-        <td><div class="cell-ro">${l.NUIT||'—'}</div></td>
-        <td><div class="total-cell has-value">${l.TOTAL_HEURES||'—'}</div></td>
+        <td><div class="cell-ro">${echapperHTML(l.JOUR||'—')}</div></td>
+        <td><div class="cell-ro">${echapperHTML(l.N_BL||'—')}</div></td>
+        <td><div class="cell-ro left">${echapperHTML(l.CHANTIER||'—')}</div></td>
+        <td><div class="cell-ro">${echapperHTML(l.N_FDM||'—')}</div></td>
+        <td><div class="cell-ro">${echapperHTML(detail)}</div></td>
+        <td><div class="cell-ro">${echapperHTML(l.PAUSE||'—')}</div></td>
+        <td><div class="cell-ro">${echapperHTML(l.REPAS||'0')}</div></td>
+        <td><div class="cell-ro">${echapperHTML(l.NUIT||'—')}</div></td>
+        <td><div class="total-cell has-value">${echapperHTML(l.TOTAL_HEURES||'—')}</div></td>
       `;
       tbody.appendChild(tr);
       totalMin += parseHeure(l.TOTAL_HEURES) || 0;
@@ -675,21 +708,21 @@ function renderTableau() {
         <option value="">—</option>
         ${JOURS.map(j=>`<option value="${j}" ${ligne.jour===j?'selected':''}>${j}</option>`).join('')}
       </select></td>
-      <td><input class="input-nb" type="number" min="0" value="${ligne.bl||''}" placeholder="—" oninput="updateLigne(${i},'bl',this.value)"></td>
-      <td><input class="cell-input left" type="text" value="${ligne.chantier||''}" oninput="updateLigne(${i},'chantier',this.value)"></td>
-      <td><input class="input-nb" type="number" min="0" value="${ligne.fdm||''}" placeholder="—" oninput="updateLigne(${i},'fdm',this.value)"></td>
+      <td><input class="input-nb" type="number" min="0" value="${echapperHTML(ligne.bl||'')}" placeholder="—" oninput="updateLigne(${i},'bl',this.value)"></td>
+      <td><input class="cell-input left" type="text" value="${echapperHTML(ligne.chantier||'')}" oninput="updateLigne(${i},'chantier',this.value)"></td>
+      <td><input class="input-nb" type="number" min="0" value="${echapperHTML(ligne.fdm||'')}" placeholder="—" oninput="updateLigne(${i},'fdm',this.value)"></td>
       <td><div class="detail-wrap">
-        <input type="text" value="${ligne.hdebut||''}" placeholder="07:30" maxlength="5" oninput="updateLigne(${i},'hdebut',this.value)">
+        <input type="text" value="${echapperHTML(ligne.hdebut||'')}" placeholder="07:30" maxlength="5" oninput="updateLigne(${i},'hdebut',this.value)">
         <span class="detail-sep">→</span>
-        <input type="text" value="${ligne.hfin||''}" placeholder="17:00" maxlength="5" oninput="updateLigne(${i},'hfin',this.value)">
+        <input type="text" value="${echapperHTML(ligne.hfin||'')}" placeholder="17:00" maxlength="5" oninput="updateLigne(${i},'hfin',this.value)">
       </div></td>
       <td><div class="detail-wrap">
-        <input type="text" value="${ligne.pause||''}" placeholder="00:00" maxlength="5" oninput="updateLigne(${i},'pause',this.value)" style="width:52px;">
+        <input type="text" value="${echapperHTML(ligne.pause||'')}" placeholder="00:00" maxlength="5" oninput="updateLigne(${i},'pause',this.value)" style="width:52px;">
       </div></td>
-      <td><input class="input-nb" type="number" min="0" max="3" value="${ligne.repas||''}" placeholder="0"
+      <td><input class="input-nb" type="number" min="0" max="3" value="${echapperHTML(ligne.repas||'')}" placeholder="0"
         oninput="updateLigne(${i},'repas',this.value===''?0:Math.min(3,Math.max(0,parseInt(this.value)||0)))"></td>
       <td><div class="detail-wrap">
-        <input type="text" value="${ligne.nuit||''}" placeholder="00:00" maxlength="5" oninput="updateLigne(${i},'nuit',this.value)" style="width:54px;">
+        <input type="text" value="${echapperHTML(ligne.nuit||'')}" placeholder="00:00" maxlength="5" oninput="updateLigne(${i},'nuit',this.value)" style="width:54px;">
       </div></td>
       <td><div class="total-cell ${min>0?'has-value':''}">${formatHeures(min)}</div></td>
     `;
@@ -752,17 +785,51 @@ function getLundi(d) {
   const day=d.getDay(), diff=(day===0)?-6:1-day;
   const l=new Date(d); l.setDate(d.getDate()+diff); return l;
 }
-function toISO(d) { return d.toISOString().split('T')[0]; }
+function toISO(d) {
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
 function getSemaineCourante() { return toISO(getLundi(new Date())); }
+function dateDepuisISO(iso) { return new Date(`${iso}T00:00:00`); }
+function definirSemaine(debut) {
+  const lundi = getLundi(dateDepuisISO(debut));
+  const dimanche = new Date(lundi);
+  dimanche.setDate(lundi.getDate()+6);
+  semaineAffichee = toISO(lundi);
+  document.getElementById('date-debut').value = semaineAffichee;
+  document.getElementById('date-fin').value = toISO(dimanche);
+}
+
+function changerSemaine(delta) {
+  if (employe && employe.role !== 'responsable') sauvegarder();
+  const base = document.getElementById('date-debut').value || semaineAffichee || getSemaineCourante();
+  const d = dateDepuisISO(base);
+  d.setDate(d.getDate() + delta * 7);
+  const nouvelleSemaine = toISO(getLundi(d));
+  if (employe && employe.role === 'responsable') {
+    if (employeActif) chargerFeuille(employeActif, nouvelleSemaine);
+  } else {
+    chargerDonneesLocales(nouvelleSemaine);
+  }
+}
+
+function allerSemaineCourante() {
+  if (employe && employe.role !== 'responsable') sauvegarder();
+  const semaine = getSemaineCourante();
+  if (employe && employe.role === 'responsable') {
+    if (employeActif) chargerFeuille(employeActif, semaine);
+  } else {
+    chargerDonneesLocales(semaine);
+  }
+}
 
 // ===== SAUVEGARDE LOCALE =====
-function sauvegarder() {
-  if (!employe || employe.role==='responsable' || feuilleVerrouillee) return;
+function sauvegarder(options = {}) {
+  if (!employe || employe.role==='responsable' || (feuilleVerrouillee && !options.forcer)) return;
   data['engin'] = document.getElementById('engin').value;
   data['date-debut'] = document.getElementById('date-debut').value;
   data['date-fin'] = document.getElementById('date-fin').value;
   data.version = VERSION;
-  localStorage.setItem('pointage_'+employe.id, JSON.stringify(data));
+  localStorage.setItem(getClePointage(data['date-debut']), JSON.stringify(data));
   const st = document.getElementById('save-status');
   if (st) { st.textContent='Sauvegardé ✓'; setTimeout(()=>st.textContent='Sauvegarde auto ✓',1500); }
 }
@@ -802,11 +869,15 @@ async function verifierValidationResponsable() {
         feuilleVerrouillee = true;
         data.visas.direction = true;
         data.visas.dateDirection = json.validation.dateVisaResponsable;
-        sauvegarder();
+        sauvegarder({ forcer:true });
         majEtatVerrouillage();
       }
       // Masquer boutons signer si déjà signé
       if (json.validation.visaEmploye === 'SIGNÉ') {
+        data.visas.chauffeur = true;
+        data.visas.dateChauffeur = json.validation.dateVisaEmploye;
+        setVisaStatus('chauffeur', true, json.validation.dateVisaEmploye);
+        sauvegarder({ forcer:true });
         [document.getElementById('btn-signer'), document.getElementById('btn-signer-action')]
           .forEach(b => { if(b) b.style.display='none'; });
       }
@@ -876,12 +947,12 @@ function confirmerReinit(oui) {
   data = {version:VERSION, lignes:Array.from({length:NB_LIGNES_DEFAUT},()=>creerLigneVide()), visas:{chauffeur:false,direction:false}};
   document.getElementById('engin').value='';
   document.getElementById('engin').readOnly=false;
-  const lundi=getLundi(new Date()), dim=new Date(lundi); dim.setDate(lundi.getDate()+6);
-  document.getElementById('date-debut').value=data['date-debut']=toISO(lundi);
-  document.getElementById('date-fin').value=data['date-fin']=toISO(dim);
+  definirSemaine(semaineAffichee || getSemaineCourante());
+  data['date-debut'] = document.getElementById('date-debut').value;
+  data['date-fin'] = document.getElementById('date-fin').value;
   setVisaStatus('chauffeur',false); setVisaStatus('direction',false);
   document.getElementById('verrou-banner').style.display='none';
-  [document.getElementById('btn-signer'),document.getElementById('btn-signer-action')].forEach(b=>{if(b) b.disabled=false;});
+  [document.getElementById('btn-signer'),document.getElementById('btn-signer-action')].forEach(b=>{if(b){b.style.display='inline-flex'; b.disabled=false;}});
   renderTableau(); sauvegarder(); afficherToast('Feuille réinitialisée');
 }
 
