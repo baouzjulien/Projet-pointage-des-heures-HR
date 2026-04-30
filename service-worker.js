@@ -1,4 +1,4 @@
-const CACHE_NAME = 'pointage-hr-v3';
+const CACHE_NAME = 'pointage-hr-v4';
 const FILES = [
   './index.html',
   './manifest.json',

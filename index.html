@@ -310,6 +310,7 @@ let data = { version:VERSION, lignes:[], visas:{chauffeur:false, direction:false
 let listeEmployes = [], employeActif = null, donneesActives = null;
 let feuilleVerrouillee = false;
 let semaineAffichee = null;
+let verificationValidationId = 0;
 
 // ===== FORMAT DATE COURT =====
 function echapperHTML(val) {
@@ -859,29 +860,47 @@ async function envoyerGoogleSheets() {
 async function verifierValidationResponsable() {
   const semaineDu = document.getElementById('date-debut').value;
   if (!semaineDu || !employe) return;
+  const verificationId = ++verificationValidationId;
   try {
     const res = await fetch(`${API_URL}?action=getSemaine&idEmploye=${employe.id}&semaine=${semaineDu}`);
     const json = await res.json();
-    if (json.ok && json.validation) {
-      const valide = json.validation.visaResponsable && json.validation.visaResponsable !== '';
-      if (valide) {
-        setVisaStatus('direction', true, json.validation.dateVisaResponsable);
-        feuilleVerrouillee = true;
-        data.visas.direction = true;
-        data.visas.dateDirection = json.validation.dateVisaResponsable;
-        sauvegarder({ forcer:true });
-        majEtatVerrouillage();
-      }
-      // Masquer boutons signer si déjà signé
-      if (json.validation.visaEmploye === 'SIGNÉ') {
-        data.visas.chauffeur = true;
-        data.visas.dateChauffeur = json.validation.dateVisaEmploye;
-        setVisaStatus('chauffeur', true, json.validation.dateVisaEmploye);
-        sauvegarder({ forcer:true });
+    if (verificationId !== verificationValidationId || document.getElementById('date-debut').value !== semaineDu) return;
+    if (!json.ok) return;
+
+    const validation = json.validation || {};
+    const valideResponsable = validation.visaResponsable && validation.visaResponsable !== '';
+    const employeSigne = validation.visaEmploye === 'SIGNÉ';
+
+    if (valideResponsable) {
+      setVisaStatus('direction', true, validation.dateVisaResponsable);
+      feuilleVerrouillee = true;
+      data.visas.direction = true;
+      data.visas.dateDirection = validation.dateVisaResponsable;
+    } else {
+      feuilleVerrouillee = false;
+      data.visas.direction = false;
+      data.visas.dateDirection = '';
+      setVisaStatus('direction', false);
+    }
+
+    if (employeSigne) {
+      data.visas.chauffeur = true;
+      data.visas.dateChauffeur = validation.dateVisaEmploye;
+      setVisaStatus('chauffeur', true, validation.dateVisaEmploye);
+      [document.getElementById('btn-signer'), document.getElementById('btn-signer-action')]
+        .forEach(b => { if(b) b.style.display='none'; });
+    } else {
+      data.visas.chauffeur = false;
+      data.visas.dateChauffeur = '';
+      setVisaStatus('chauffeur', false);
+      if (!feuilleVerrouillee) {
         [document.getElementById('btn-signer'), document.getElementById('btn-signer-action')]
-          .forEach(b => { if(b) b.style.display='none'; });
+          .forEach(b => { if(b) { b.style.display='inline-flex'; b.disabled=false; } });
       }
     }
+
+    sauvegarder({ forcer:true });
+    majEtatVerrouillage();
   } catch(e) {} // silencieux — pas bloquant
 }
 
