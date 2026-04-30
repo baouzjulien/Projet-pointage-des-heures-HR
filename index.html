@@ -46,12 +46,8 @@
   .user-bar-role { background:rgba(255,255,255,0.15); padding:3px 10px; font-size:10px; letter-spacing:1px; text-transform:uppercase; }
   .btn-deconnexion { font-family:var(--font-mono); font-size:11px; font-weight:600; background:var(--rouge); border:2px solid #fff; color:#fff; padding:7px 14px; cursor:pointer; letter-spacing:0.5px; text-transform:uppercase; transition:all 0.15s; white-space:nowrap; }
   .btn-deconnexion:hover { background:#a93226; }
-  .btn-deconnexion .label-deconnexion { display:inline; }
-  .btn-deconnexion .icon-deconnexion { font-size:13px; line-height:1; }
   @media (max-width:480px) {
-    .btn-deconnexion { padding:6px 10px; font-size:11px; letter-spacing:0; min-width:44px; }
-    .btn-deconnexion .label-deconnexion { display:none; }
-    .btn-deconnexion .icon-deconnexion { font-size:12px; }
+    .btn-deconnexion { padding:6px 8px; font-size:10px; letter-spacing:0; }
   }
 
   /* ONGLETS */
@@ -190,7 +186,7 @@
         <span class="user-bar-nom" id="user-nom">—</span>
         <span class="user-bar-role" id="user-role">—</span>
       </div>
-      <button class="btn-deconnexion" onclick="seDeconnecter()"><span class="icon-deconnexion">OFF</span> <span class="label-deconnexion">Déconnexion</span></button>
+      <button class="btn-deconnexion" onclick="seDeconnecter()">Déconnexion</button>
     </div>
 
     <!-- ONGLETS RESPONSABLE -->
