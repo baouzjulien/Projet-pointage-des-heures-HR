@@ -345,6 +345,13 @@ function afficherChargementTableau(message) {
   document.getElementById('tbody').innerHTML = markupChargement(message);
 }
 
+function afficherStatutEnvoi(message, couleur = 'var(--gris-fonce)') {
+  const st = document.getElementById('save-status');
+  if (!st) return;
+  st.textContent = message;
+  st.style.color = couleur;
+}
+
 function formatDateCourte(str) {
   if (!str) return '';
   const jours = ['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'];
@@ -718,7 +725,7 @@ async function validerResponsable() {
       });
     }
   } catch(e) {
-    afficherToast('Erreur réseau');
+    afficherToast('Validation non envoyée — vérifiez le réseau puis réessayez');
     ['btn-valider','btn-valider-action'].forEach(id => {
       const b = document.getElementById(id); if(b){b.disabled=false;b.textContent=id==='btn-valider'?'✔ Valider':'✔ Valider la feuille';}
     });
@@ -859,8 +866,8 @@ function sauvegarder(options = {}) {
   data['date-fin'] = document.getElementById('date-fin').value;
   data.version = VERSION;
   localStorage.setItem(getClePointage(data['date-debut']), JSON.stringify(data));
-  const st = document.getElementById('save-status');
-  if (st) { st.textContent='Sauvegardé ✓'; setTimeout(()=>st.textContent='Sauvegarde auto ✓',1500); }
+  afficherStatutEnvoi('Sauvegardé localement ✓');
+  setTimeout(()=>afficherStatutEnvoi('Sauvegarde auto ✓'),1500);
 }
 
 // ===== ENVOI GOOGLE SHEETS =====
@@ -869,6 +876,7 @@ async function envoyerGoogleSheets() {
   if (!semaineDu) { afficherToast('Renseigne la date de début'); return false; }
   const lignesNonVides = data.lignes.filter(l=>l.jour||l.chantier||l.hdebut);
   if (lignesNonVides.length===0) { afficherToast('Aucune donnée à envoyer'); return false; }
+  afficherStatutEnvoi('Envoi en cours...');
   try {
     const res = await fetch(API_URL, {
       method:'POST',
@@ -880,8 +888,18 @@ async function envoyerGoogleSheets() {
       })
     });
     const json = await res.json();
-    return json.ok;
-  } catch(e) { afficherToast('Erreur réseau — réessaie'); return false; }
+    if (!json.ok) {
+      afficherStatutEnvoi('Non envoyé — réessayez', 'var(--rouge)');
+      afficherToast('Non envoyé — réessayez');
+      return false;
+    }
+    afficherStatutEnvoi('Envoyé ✓', 'var(--vert)');
+    return true;
+  } catch(e) {
+    afficherStatutEnvoi('Non envoyé — réessayez', 'var(--rouge)');
+    afficherToast('Non envoyé — vérifiez le réseau puis réessayez');
+    return false;
+  }
 }
 
 // ===== VÉRIFIER SI VALIDÉ PAR RESPONSABLE (côté chauffeur) =====
@@ -952,7 +970,7 @@ async function signerEmploye() {
   btns.forEach(b=>{if(b){b.textContent='...';b.disabled=true;}});
   try {
     const ok = await envoyerGoogleSheets();
-    if (!ok) { btns.forEach(b=>{if(b){b.textContent='✔ Signer';b.disabled=false;}}); return; }
+    if (!ok) { majBoutonsSignature(data.visas && data.visas.chauffeur); return; }
     const res = await fetch(API_URL, {
       method:'POST',
       body:JSON.stringify({action:'signerEmploye', idEmploye:employe.id, semaineDu})
@@ -967,8 +985,16 @@ async function signerEmploye() {
       afficherToast('Feuille signée et envoyée ✓');
       // Vérifier si déjà validé par le responsable
       verifierValidationResponsable();
-    } else { afficherToast('Erreur : '+json.erreur); btns.forEach(b=>{if(b){b.textContent='✔ Signer';b.disabled=false;}}); }
-  } catch(e) { afficherToast('Erreur réseau'); btns.forEach(b=>{if(b){b.textContent='✔ Signer';b.disabled=false;}}); }
+    } else {
+      afficherStatutEnvoi('Non signé — réessayez', 'var(--rouge)');
+      afficherToast('Erreur : '+json.erreur);
+      majBoutonsSignature(data.visas && data.visas.chauffeur);
+    }
+  } catch(e) {
+    afficherStatutEnvoi('Non signé — réessayez', 'var(--rouge)');
+    afficherToast('Signature non envoyée — vérifiez le réseau puis réessayez');
+    majBoutonsSignature(data.visas && data.visas.chauffeur);
+  }
 }
 
 function setVisaStatus(type, val, dateStr) {
