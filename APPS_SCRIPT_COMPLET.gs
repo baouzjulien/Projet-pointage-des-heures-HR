@@ -91,6 +91,62 @@ function journaliserAudit(action, infos) {
   }
 }
 
+function getConfigValue(cle) {
+  const sheet = SS.getSheetByName('CONFIG');
+  if (!sheet) return '';
+
+  const data = sheet.getDataRange().getValues();
+  const cleRecherchee = str(cle).toUpperCase();
+
+  for (let i = 0; i < data.length; i++) {
+    if (str(data[i][0]).toUpperCase() === cleRecherchee) {
+      return str(data[i][1]);
+    }
+  }
+
+  return '';
+}
+
+function notifierResponsableSignature(emp, semaine) {
+  try {
+    const email = getConfigValue('EMAIL_RESPONSABLE');
+    if (!email) return;
+
+    const appUrl = getConfigValue('APP_URL') || 'https://baouzjulien.github.io/Projet-pointage-des-heures-HR/';
+    const nomComplet = `${emp.prenom} ${emp.nom}`.trim();
+    const sujet = `Pointage signé - ${nomComplet} - semaine du ${semaine}`;
+    const corps = [
+      `Bonjour,`,
+      ``,
+      `${nomComplet} a signé sa feuille de pointage pour la semaine du ${semaine}.`,
+      ``,
+      `Vous pouvez la consulter et la valider ici :`,
+      appUrl,
+      ``,
+      `Message automatique - Pointage HR Occitanie`
+    ].join('\n');
+
+    MailApp.sendEmail(email, sujet, corps);
+    journaliserAudit('EMAIL_RESPONSABLE_SIGNATURE', {
+      idEmploye: emp.id,
+      nom: emp.nom,
+      prenom: emp.prenom,
+      semaine,
+      utilisateur: 'SYSTEME',
+      detail: `Email envoye a ${email}`
+    });
+  } catch (err) {
+    journaliserAudit('ERREUR_EMAIL_RESPONSABLE', {
+      idEmploye: emp && emp.id,
+      nom: emp && emp.nom,
+      prenom: emp && emp.prenom,
+      semaine,
+      utilisateur: 'SYSTEME',
+      detail: err.message
+    });
+  }
+}
+
 // ============================================================
 // POINTS D'ENTREE
 // ============================================================
@@ -280,6 +336,7 @@ function signerEmploye(payload) {
         utilisateur: `${emp.prenom} ${emp.nom}`,
         detail: 'Feuille signee par le chauffeur'
       });
+      notifierResponsableSignature(emp, semaine);
       return { ok: true, message: 'Visa employé apposé' };
     }
   }
