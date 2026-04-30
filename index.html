@@ -321,6 +321,22 @@ function echapperHTML(val) {
   }[c]));
 }
 
+function majBoutonsSignature(employeSigne) {
+  if (feuilleVerrouillee) return;
+  const btn = document.getElementById('btn-signer');
+  const btnAction = document.getElementById('btn-signer-action');
+  if (btn) {
+    btn.style.display = 'inline-flex';
+    btn.disabled = false;
+    btn.textContent = employeSigne ? '↻ Mettre à jour' : '✔ Signer';
+  }
+  if (btnAction) {
+    btnAction.style.display = 'inline-flex';
+    btnAction.disabled = false;
+    btnAction.textContent = employeSigne ? '↻ Mettre à jour & Envoyer' : '✔ Signer & Envoyer';
+  }
+}
+
 function formatDateCourte(str) {
   if (!str) return '';
   const jours = ['dim.','lun.','mar.','mer.','jeu.','ven.','sam.'];
@@ -442,8 +458,7 @@ function chargerDonneesLocales(semaine) {
   semaineAffichee = semaine;
   feuilleVerrouillee = false;
   document.getElementById('engin').readOnly = false;
-  [document.getElementById('btn-signer'), document.getElementById('btn-signer-action')]
-    .forEach(b => { if(b) { b.style.display='inline-flex'; b.disabled=false; b.textContent = b.id === 'btn-signer' ? '✔ Signer' : '✔ Signer & Envoyer'; } });
+  majBoutonsSignature(false);
 
   const saved = localStorage.getItem(getClePointage(semaine))
     || (semaine === getSemaineCourante() ? localStorage.getItem('pointage_' + employe.id) : null);
@@ -472,11 +487,10 @@ function chargerDonneesLocales(semaine) {
 
   if (data.visas && data.visas.chauffeur) {
     setVisaStatus('chauffeur', true, data.visas.dateChauffeur);
-    // Masquer bouton signer si déjà signé
-    [document.getElementById('btn-signer'), document.getElementById('btn-signer-action')]
-      .forEach(b => { if(b) b.style.display='none'; });
+    majBoutonsSignature(true);
   } else {
     setVisaStatus('chauffeur', false);
+    majBoutonsSignature(false);
   }
   if (data.visas && data.visas.direction) setVisaStatus('direction', true, data.visas.dateDirection);
   else setVisaStatus('direction', false);
@@ -898,16 +912,12 @@ async function verifierValidationResponsable() {
       data.visas.chauffeur = true;
       data.visas.dateChauffeur = validation.dateVisaEmploye;
       setVisaStatus('chauffeur', true, validation.dateVisaEmploye);
-      [document.getElementById('btn-signer'), document.getElementById('btn-signer-action')]
-        .forEach(b => { if(b) b.style.display='none'; });
+      majBoutonsSignature(true);
     } else {
       data.visas.chauffeur = false;
       data.visas.dateChauffeur = '';
       setVisaStatus('chauffeur', false);
-      if (!feuilleVerrouillee) {
-        [document.getElementById('btn-signer'), document.getElementById('btn-signer-action')]
-          .forEach(b => { if(b) { b.style.display='inline-flex'; b.disabled=false; } });
-      }
+      majBoutonsSignature(false);
     }
 
     sauvegarder({ forcer:true });
@@ -935,9 +945,7 @@ async function signerEmploye() {
       const maintenant = new Date().toLocaleString('fr-FR');
       data.visas.chauffeur=true; data.visas.dateChauffeur=maintenant;
       setVisaStatus('chauffeur', true, maintenant);
-      // Masquer complètement les boutons signer
-      [document.getElementById('btn-signer'), document.getElementById('btn-signer-action')]
-        .forEach(b => { if(b) { b.style.display='none'; b.disabled=true; } });
+      majBoutonsSignature(true);
       sauvegarder();
       afficherToast('Feuille signée et envoyée ✓');
       // Vérifier si déjà validé par le responsable
