@@ -37,6 +37,60 @@ function estSemaineValidee(idEmp, semaine) {
   return Boolean(validation && validation.visaResponsable);
 }
 
+function getEmployeById(idEmp) {
+  const sheet = SS.getSheetByName('EMPLOYÉS');
+  const data = sheet.getDataRange().getValues();
+
+  for (let i = 1; i < data.length; i++) {
+    const [id, nom, prenom, pin, role] = data[i];
+    if (str(id) === str(idEmp)) {
+      return {
+        id: str(id),
+        nom: str(nom),
+        prenom: str(prenom),
+        role: str(role)
+      };
+    }
+  }
+
+  return { id: str(idEmp), nom: '', prenom: '', role: '' };
+}
+
+function getAuditSheet() {
+  const headers = ['DATE_ACTION', 'ACTION', 'ID_EMPLOYE', 'NOM', 'PRENOM', 'SEMAINE', 'UTILISATEUR', 'DETAIL'];
+  let sheet = SS.getSheetByName('AUDIT');
+
+  if (!sheet) {
+    sheet = SS.insertSheet('AUDIT');
+    sheet.appendRow(headers);
+    return sheet;
+  }
+
+  if (sheet.getLastRow() === 0) {
+    sheet.appendRow(headers);
+  }
+
+  return sheet;
+}
+
+function journaliserAudit(action, infos) {
+  try {
+    const sheet = getAuditSheet();
+    sheet.appendRow([
+      new Date().toLocaleString('fr-FR'),
+      str(action),
+      str(infos.idEmploye || ''),
+      str(infos.nom || ''),
+      str(infos.prenom || ''),
+      str(infos.semaine || ''),
+      str(infos.utilisateur || ''),
+      str(infos.detail || '')
+    ]);
+  } catch (err) {
+    // L'audit ne doit jamais bloquer le pointage.
+  }
+}
+
 // ============================================================
 // POINTS D'ENTREE
 // ============================================================
@@ -137,15 +191,22 @@ function sauvegarder(payload) {
   const semaine = normaliserDate(semaineDu);
 
   if (estSemaineValidee(idEmp, semaine)) {
+    journaliserAudit('TENTATIVE_MODIF_FEUILLE_VALIDEE', {
+      idEmploye: idEmp,
+      nom,
+      prenom,
+      semaine,
+      utilisateur: `${prenom} ${nom}`,
+      detail: 'Sauvegarde refusee : feuille deja validee par le responsable'
+    });
     return { ok: false, erreur: 'Cette semaine est déjà validée par le responsable' };
   }
 
   const sheet = SS.getSheetByName('POINTAGES');
   supprimerLignesSemaine(sheet, idEmp, semaine);
+  const lignesUtiles = (lignes || []).filter(l => l.jour || l.chantier || l.hdebut);
 
-  lignes.forEach((l, index) => {
-    if (!l.jour && !l.chantier && !l.hdebut) return;
-
+  lignesUtiles.forEach((l, index) => {
     sheet.appendRow([
       `${idEmp}_${semaine}_${index}`,
       idEmp,
@@ -169,6 +230,14 @@ function sauvegarder(payload) {
   });
 
   initValidation(idEmp, semaine);
+  journaliserAudit('SAUVEGARDE_FEUILLE', {
+    idEmploye: idEmp,
+    nom,
+    prenom,
+    semaine,
+    utilisateur: `${prenom} ${nom}`,
+    detail: `${lignesUtiles.length} ligne(s) sauvegardee(s)`
+  });
   return { ok: true, message: 'Feuille sauvegardée' };
 }
 
@@ -182,6 +251,15 @@ function signerEmploye(payload) {
   const idRef = `${idEmp}_${semaine}`;
 
   if (estSemaineValidee(idEmp, semaine)) {
+    const emp = getEmployeById(idEmp);
+    journaliserAudit('TENTATIVE_SIGNATURE_FEUILLE_VALIDEE', {
+      idEmploye: idEmp,
+      nom: emp.nom,
+      prenom: emp.prenom,
+      semaine,
+      utilisateur: `${emp.prenom} ${emp.nom}`,
+      detail: 'Signature refusee : feuille deja validee par le responsable'
+    });
     return { ok: false, erreur: 'Cette semaine est déjà validée par le responsable' };
   }
 
@@ -193,6 +271,15 @@ function signerEmploye(payload) {
       sheet.getRange(i + 1, 2).setValue('SIGNÉ');
       sheet.getRange(i + 1, 3).setValue(new Date().toLocaleString('fr-FR'));
       majStatutPointages(idEmp, semaine, 'SIGNÉ_EMPLOYÉ');
+      const emp = getEmployeById(idEmp);
+      journaliserAudit('SIGNATURE_EMPLOYE', {
+        idEmploye: idEmp,
+        nom: emp.nom,
+        prenom: emp.prenom,
+        semaine,
+        utilisateur: `${emp.prenom} ${emp.nom}`,
+        detail: 'Feuille signee par le chauffeur'
+      });
       return { ok: true, message: 'Visa employé apposé' };
     }
   }
@@ -224,6 +311,15 @@ function signerResponsable(payload) {
       sheet.getRange(i + 1, 4).setValue('VALIDÉ par ' + str(payload.nomResponsable));
       sheet.getRange(i + 1, 5).setValue(new Date().toLocaleString('fr-FR'));
       majStatutPointages(idEmp, semaine, 'VALIDÉ');
+      const emp = getEmployeById(idEmp);
+      journaliserAudit('VALIDATION_RESPONSABLE', {
+        idEmploye: idEmp,
+        nom: emp.nom,
+        prenom: emp.prenom,
+        semaine,
+        utilisateur: str(payload.nomResponsable),
+        detail: 'Feuille validee par le responsable'
+      });
       return { ok: true, message: 'Feuille validée' };
     }
   }
