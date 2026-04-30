@@ -528,7 +528,7 @@ function majEtatVerrouillage() {
     if (btnSigner) btnSigner.style.display = 'none';
     if (btnSignerAction) btnSignerAction.style.display = 'none';
     if (btnAjout) btnAjout.disabled = true;
-    if (btnReinit) btnReinit.disabled = true;
+    if (btnReinit) btnReinit.style.display = 'none';
     // Désactiver tous les inputs du tableau
     document.querySelectorAll('#tbody input, #tbody select').forEach(el => el.disabled = true);
     document.getElementById('engin').readOnly = true;
@@ -537,7 +537,7 @@ function majEtatVerrouillage() {
     if (btnSigner) btnSigner.disabled = false;
     if (btnSignerAction) btnSignerAction.disabled = false;
     if (btnAjout) btnAjout.disabled = false;
-    if (btnReinit) btnReinit.disabled = false;
+    if (btnReinit) { btnReinit.style.display = 'inline-flex'; btnReinit.disabled = false; }
     document.querySelectorAll('#tbody input, #tbody select').forEach(el => el.disabled = false);
     document.getElementById('engin').readOnly = false;
   }
