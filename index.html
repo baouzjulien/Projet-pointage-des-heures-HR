@@ -47,9 +47,11 @@
   .btn-deconnexion { font-family:var(--font-mono); font-size:11px; font-weight:600; background:var(--rouge); border:2px solid #fff; color:#fff; padding:7px 14px; cursor:pointer; letter-spacing:0.5px; text-transform:uppercase; transition:all 0.15s; white-space:nowrap; }
   .btn-deconnexion:hover { background:#a93226; }
   .btn-deconnexion .label-deconnexion { display:inline; }
+  .btn-deconnexion .icon-deconnexion { font-size:13px; line-height:1; }
   @media (max-width:480px) {
-    .btn-deconnexion { padding:6px 10px; font-size:14px; letter-spacing:0; }
+    .btn-deconnexion { padding:6px 10px; font-size:11px; letter-spacing:0; min-width:44px; }
     .btn-deconnexion .label-deconnexion { display:none; }
+    .btn-deconnexion .icon-deconnexion { font-size:12px; }
   }
 
   /* ONGLETS */
@@ -165,7 +167,7 @@
 <div id="login-screen">
   <div class="login-card">
     <div class="login-titre">FEUILLE DE POINTAGE<br>HR OCCITANIE</div>
-    <div class="login-sous-titre">Connexion employé</div>
+    <div class="login-sous-titre">Connexion</div>
     <label class="pin-label" for="pin-input">Votre code PIN</label>
     <input class="pin-input" type="password" inputmode="numeric" id="pin-input"
       maxlength="6" placeholder="••••" onkeydown="if(event.key==='Enter') seConnecter()">
@@ -184,7 +186,7 @@
         <span class="user-bar-nom" id="user-nom">—</span>
         <span class="user-bar-role" id="user-role">—</span>
       </div>
-      <button class="btn-deconnexion" onclick="seDeconnecter()">⏻ <span class="label-deconnexion">Déconnexion</span></button>
+      <button class="btn-deconnexion" onclick="seDeconnecter()"><span class="icon-deconnexion">OFF</span> <span class="label-deconnexion">Déconnexion</span></button>
     </div>
 
     <!-- ONGLETS RESPONSABLE -->
@@ -868,6 +870,15 @@ async function verifierValidationResponsable() {
     if (!json.ok) return;
 
     const validation = json.validation || {};
+    if (json.lignes && json.lignes.length > 0) {
+      data.lignes = json.lignes.map(ligneServeurVersLocale);
+      const enginServeur = json.lignes[0].ENGIN || '';
+      if (enginServeur) {
+        data.engin = enginServeur;
+        document.getElementById('engin').value = enginServeur;
+      }
+    }
+
     const valideResponsable = validation.visaResponsable && validation.visaResponsable !== '';
     const employeSigne = validation.visaEmploye === 'SIGNÉ';
 
@@ -900,6 +911,7 @@ async function verifierValidationResponsable() {
     }
 
     sauvegarder({ forcer:true });
+    renderTableau();
     majEtatVerrouillage();
   } catch(e) {} // silencieux — pas bloquant
 }
@@ -946,6 +958,20 @@ function setVisaStatus(type, val, dateStr) {
 // ===== ACTIONS EMPLOYÉ =====
 function creerLigneVide() {
   return {jour:'',bl:'',chantier:'',fdm:'',hdebut:'',hfin:'',pause:'',repas:0,nuit:''};
+}
+
+function ligneServeurVersLocale(l) {
+  return {
+    jour: l.JOUR || '',
+    bl: l.N_BL || '',
+    chantier: l.CHANTIER || '',
+    fdm: l.N_FDM || '',
+    hdebut: l.H_DEBUT || '',
+    hfin: l.H_FIN || '',
+    pause: l.PAUSE || '',
+    repas: l.REPAS || 0,
+    nuit: l.NUIT || ''
+  };
 }
 
 function ajouterLigne() {
