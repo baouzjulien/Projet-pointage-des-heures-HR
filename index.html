@@ -104,8 +104,8 @@
   .cell-input { font-family:var(--font-sans); font-size:13px; border:none; background:transparent; color:var(--noir); padding:7px 8px; width:100%; height:36px; outline:none; text-align:center; }
   .cell-input.left { text-align:left; }
   .cell-input:focus { background:#fef3cd; }
-  .cell-ro { font-family:var(--font-sans); font-size:13px; color:var(--noir); padding:7px 8px; height:36px; display:flex; align-items:center; justify-content:center; }
-  .cell-ro.left { justify-content:flex-start; }
+  .cell-ro { font-family:var(--font-sans); font-size:13px; color:var(--noir); padding:7px 8px; min-height:36px; display:flex; align-items:center; justify-content:center; }
+  .cell-ro.left { justify-content:flex-start; text-align:left; white-space:normal; line-height:1.25; }
   .jour-select { font-family:var(--font-sans); font-size:12px; font-weight:500; border:none; background:transparent; color:var(--noir); padding:7px 4px; width:100%; height:36px; outline:none; text-align:center; cursor:pointer; -webkit-appearance:none; appearance:none; }
   .jour-select:focus { background:#fef3cd; }
   .input-nb { font-family:var(--font-mono); font-size:14px; font-weight:600; border:none; background:transparent; color:var(--noir); width:100%; height:36px; text-align:center; outline:none; padding:0 4px; }
@@ -669,10 +669,11 @@ function renderTableauLecture(lignes) {
     lignes.forEach(l => {
       const tr = document.createElement('tr');
       const detail = l.H_DEBUT && l.H_FIN ? `${l.H_DEBUT} → ${l.H_FIN}` : '—';
+      const chantierComplet = l.CHANTIER || '—';
       tr.innerHTML = `
         <td><div class="cell-ro">${echapperHTML(l.JOUR||'—')}</div></td>
         <td><div class="cell-ro">${echapperHTML(l.N_BL||'—')}</div></td>
-        <td><div class="cell-ro left">${echapperHTML(l.CHANTIER||'—')}</div></td>
+        <td><div class="cell-ro left" title="${echapperHTML(chantierComplet)}">${echapperHTML(chantierComplet)}</div></td>
         <td><div class="cell-ro">${echapperHTML(l.N_FDM||'—')}</div></td>
         <td><div class="cell-ro">${echapperHTML(detail)}</div></td>
         <td><div class="cell-ro">${echapperHTML(l.PAUSE||'—')}</div></td>
