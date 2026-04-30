@@ -509,8 +509,8 @@ function majEtatVerrouillage() {
 
   if (feuilleVerrouillee) {
     banner.style.display = 'block';
-    if (btnSigner) btnSigner.disabled = true;
-    if (btnSignerAction) btnSignerAction.disabled = true;
+    if (btnSigner) btnSigner.style.display = 'none';
+    if (btnSignerAction) btnSignerAction.style.display = 'none';
     if (btnAjout) btnAjout.disabled = true;
     if (btnReinit) btnReinit.disabled = true;
     // Désactiver tous les inputs du tableau
