@@ -98,7 +98,7 @@
   table { width:100%; border-collapse:collapse; min-width:680px; }
   thead th { background:var(--accent); color:var(--blanc); font-family:var(--font-mono); font-size:10px; font-weight:600; letter-spacing:1.2px; text-transform:uppercase; text-align:center; padding:10px 6px; border-right:1px solid rgba(255,255,255,0.15); white-space:nowrap; }
   thead th:last-child { border-right:none; }
-  .col-jour{width:90px} .col-bl{width:68px} .col-chantier{width:auto;min-width:160px} .col-fdm{width:68px} .col-detail{width:230px} .col-pause{width:104px} .col-repas{width:52px} .col-nuit{width:104px} .col-total{width:78px}
+  .col-jour{width:90px} .col-bl{width:68px} .col-chantier{width:auto;min-width:160px} .col-fdm{width:68px} .col-detail{width:150px} .col-pause{width:68px} .col-repas{width:52px} .col-nuit{width:68px} .col-total{width:78px}
   tbody tr { border-bottom:var(--bordure-fine); transition:background 0.1s; }
   tbody tr:nth-child(even) { background:rgba(0,0,0,0.018); }
   tbody tr:hover { background:#fef9e7; }
@@ -119,10 +119,9 @@
   .total-cell { font-family:var(--font-mono); font-size:13px; font-weight:600; text-align:center; padding:7px 6px; height:36px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.03); color:var(--noir); }
   .total-cell.has-value { color:var(--vert); }
   .detail-wrap { display:flex; align-items:center; justify-content:center; gap:3px; padding:0 4px; }
-  .detail-wrap .time-select { font-family:var(--font-mono); font-size:12px; border:none; background:transparent; color:var(--noir); width:46px; text-align:center; outline:none; padding:7px 2px; height:36px; cursor:pointer; }
-  .detail-wrap .time-select:focus { background:#fef3cd; }
-  .time-picker { display:inline-flex; align-items:center; justify-content:center; gap:1px; }
-  .time-sep { font-family:var(--font-mono); font-size:12px; color:var(--gris-fonce); }
+  .time-input { font-family:var(--font-mono); font-size:12px; border:none; background:transparent; color:var(--noir); width:58px; text-align:center; outline:none; padding:7px 2px; height:36px; cursor:pointer; }
+  .time-input:focus { background:#fef3cd; }
+  .time-input::-webkit-calendar-picker-indicator { opacity:0; display:none; }
   .detail-sep { font-family:var(--font-mono); font-size:13px; color:var(--gris-fonce); }
   tfoot tr td { background:var(--gris-leger); border-right:var(--bordure-fine); border-top:var(--bordure); padding:8px 6px; font-family:var(--font-mono); font-size:11px; font-weight:600; text-align:center; color:var(--noir); }
   tfoot .totaux-label { text-align:left; padding-left:12px; text-transform:uppercase; }
@@ -763,17 +762,17 @@ function renderTableau() {
       <td><input class="cell-input left" type="text" value="${echapperHTML(ligne.chantier||'')}" oninput="updateLigne(${i},'chantier',this.value)"></td>
       <td><input class="input-nb" type="number" min="0" value="${echapperHTML(ligne.fdm||'')}" placeholder="—" oninput="updateLigne(${i},'fdm',this.value)"></td>
       <td><div class="detail-wrap">
-        ${renderChampHeureSelect(i,'hdebut',ligne.hdebut)}
+        ${renderChampHeureInput(i,'hdebut',ligne.hdebut)}
         <span class="detail-sep">-></span>
-        ${renderChampHeureSelect(i,'hfin',ligne.hfin)}
+        ${renderChampHeureInput(i,'hfin',ligne.hfin)}
       </div></td>
       <td><div class="detail-wrap">
-        ${renderChampHeureSelect(i,'pause',ligne.pause)}
+        ${renderChampHeureInput(i,'pause',ligne.pause)}
       </div></td>
       <td><input class="input-nb" type="number" min="0" max="3" value="${echapperHTML(ligne.repas||'')}" placeholder="0"
         oninput="updateLigne(${i},'repas',this.value===''?0:Math.min(3,Math.max(0,parseInt(this.value)||0)))"></td>
       <td><div class="detail-wrap">
-        ${renderChampHeureSelect(i,'nuit',ligne.nuit)}
+        ${renderChampHeureInput(i,'nuit',ligne.nuit)}
       </div></td>
       <td><div class="total-cell ${min>0?'has-value':''}">${formatHeures(min)}</div></td>
     `;
@@ -801,51 +800,15 @@ function majCalculLigne(i) {
   updateTotaux();
 }
 
-function renderChampHeureSelect(i, champ, val) {
-  const parts = valeurHeureSelect(val, champ);
-  const maxHeure = heureMaxChamp(champ);
-  return `
-    <span class="time-picker" data-ligne="${i}" data-champ="${champ}">
-      <select class="time-select" aria-label="Heure" onchange="updateChampHeureSelect(${i},'${champ}')">
-        <option value="">--</option>
-        ${optionsHeures(maxHeure, parts.heure)}
-      </select>
-      <span class="time-sep">:</span>
-      <select class="time-select" aria-label="Minutes" onchange="updateChampHeureSelect(${i},'${champ}')">
-        ${optionsMinutes(parts.minute)}
-      </select>
-    </span>
-  `;
+function renderChampHeureInput(i, champ, val) {
+  const value = normaliserDemiHeure(val, heureMaxChamp(champ));
+  return `<input class="time-input" type="time" value="${echapperHTML(value)}" min="00:00" max="23:30" step="1800" onchange="updateChampHeureInput(this,${i},'${champ}')" oninput="updateChampHeureInput(this,${i},'${champ}')">`;
 }
 
-function optionsHeures(maxHeure, selected) {
-  let html = '';
-  for (let h = 0; h <= maxHeure; h++) {
-    const v = String(h).padStart(2, '0');
-    html += `<option value="${v}" ${selected === v ? 'selected' : ''}>${v}</option>`;
-  }
-  return html;
-}
-
-function optionsMinutes(selected) {
-  return ['00','30'].map(v => `<option value="${v}" ${selected === v ? 'selected' : ''}>${v}</option>`).join('');
-}
-
-function valeurHeureSelect(val, champ) {
-  const normalise = normaliserDemiHeure(val, heureMaxChamp(champ));
-  if (!normalise) return { heure:'', minute:'00' };
-  const [heure, minute] = normalise.split(':');
-  return { heure, minute };
-}
-
-function updateChampHeureSelect(i, champ) {
+function updateChampHeureInput(input, i, champ) {
   if (feuilleVerrouillee) return;
-  const picker = document.querySelector(`.time-picker[data-ligne="${i}"][data-champ="${champ}"]`);
-  if (!picker) return;
-  const selects = picker.querySelectorAll('select');
-  const heure = selects[0].value;
-  const minute = selects[1].value || '00';
-  data.lignes[i][champ] = heure === '' ? '' : `${heure}:${minute}`;
+  data.lignes[i][champ] = normaliserDemiHeure(input.value, heureMaxChamp(champ));
+  input.value = data.lignes[i][champ];
   majCalculLigne(i);
   sauvegarder();
 }
@@ -908,7 +871,7 @@ function normaliserDemiHeure(val, maxHeure = 99) {
 }
 
 function heureMaxChamp(champ) {
-  return champ === 'hdebut' || champ === 'hfin' ? 23 : 99;
+  return 23;
 }
 
 function normaliserLigneHeures(ligne) {
