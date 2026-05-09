@@ -107,6 +107,7 @@
   .cell-input { font-family:var(--font-sans); font-size:13px; border:none; background:transparent; color:var(--noir); padding:7px 8px; width:100%; height:36px; outline:none; text-align:center; }
   .cell-input.left { text-align:left; }
   .cell-input:focus { background:#fef3cd; }
+  .heure-invalide { background:#fdecea!important; outline:2px solid var(--rouge)!important; }
   .cell-ro { font-family:var(--font-sans); font-size:13px; color:var(--noir); padding:7px 8px; min-height:36px; display:flex; align-items:center; justify-content:center; }
   .cell-ro.left { justify-content:flex-start; text-align:left; white-space:normal; line-height:1.25; }
   .jour-select { font-family:var(--font-sans); font-size:12px; font-weight:500; border:none; background:transparent; color:var(--noir); padding:7px 4px; width:100%; height:36px; outline:none; text-align:center; cursor:pointer; -webkit-appearance:none; appearance:none; }
@@ -495,6 +496,7 @@ function chargerDonneesLocales(semaine, options = {}) {
   }
   if (!data.lignes || data.lignes.length === 0)
     data.lignes = Array.from({length:NB_LIGNES_DEFAUT}, () => creerLigneVide());
+  data.lignes.forEach(l => normaliserLigneHeures(l));
 
   document.getElementById('nom').value = employe.nom;
   document.getElementById('prenom').value = employe.prenom;
@@ -622,11 +624,11 @@ async function chargerFeuille(emp, semaineDu = getSemaineCourante()) {
     const res = await fetch(`${API_URL}?action=getSemaine&idEmploye=${emp.id}&semaine=${semaineDu}`);
     const json = await res.json();
     if (json.ok) {
-      donneesActives = json.lignes;
+      donneesActives = (json.lignes || []).map(normaliserLigneServeur);
 
       // Engin — toujours readonly pour le responsable
       const enginEl = document.getElementById('engin');
-      enginEl.value = (json.lignes && json.lignes.length > 0) ? (json.lignes[0].ENGIN || '') : '';
+      enginEl.value = (donneesActives && donneesActives.length > 0) ? (donneesActives[0].ENGIN || '') : '';
       enginEl.readOnly = true;
 
       const dejaValide = json.validation && json.validation.visaResponsable && json.validation.visaResponsable !== '';
@@ -637,7 +639,7 @@ async function chargerFeuille(emp, semaineDu = getSemaineCourante()) {
       // Visa responsable
       if (dejaValide) setVisaStatus('direction', true, json.validation.dateVisaResponsable);
 
-      renderTableauLecture(json.lignes);
+      renderTableauLecture(donneesActives);
 
       // Bouton valider : visible seulement si employé a signé et pas encore validé
       ['btn-valider','btn-valider-action'].forEach(id => {
@@ -676,21 +678,23 @@ function renderTableauLecture(lignes) {
   } else {
     lignes.forEach(l => {
       const tr = document.createElement('tr');
-      const detail = l.H_DEBUT && l.H_FIN ? `${l.H_DEBUT} → ${l.H_FIN}` : '—';
-      const chantierComplet = l.CHANTIER || '—';
+      const detail = l.H_DEBUT && l.H_FIN ? `${l.H_DEBUT} -> ${l.H_FIN}` : '-';
+      const chantierComplet = l.CHANTIER || '-';
+      const totalLigneMin = parseHeure(l.TOTAL_HEURES) || calculerMinutes(ligneServeurVersLocale(l));
+      const totalAffiche = formatHeures(totalLigneMin);
       tr.innerHTML = `
-        <td><div class="cell-ro">${echapperHTML(l.JOUR||'—')}</div></td>
-        <td><div class="cell-ro">${echapperHTML(l.N_BL||'—')}</div></td>
+        <td><div class="cell-ro">${echapperHTML(l.JOUR||'-')}</div></td>
+        <td><div class="cell-ro">${echapperHTML(l.N_BL||'-')}</div></td>
         <td><div class="cell-ro left" title="${echapperHTML(chantierComplet)}">${echapperHTML(chantierComplet)}</div></td>
-        <td><div class="cell-ro">${echapperHTML(l.N_FDM||'—')}</div></td>
+        <td><div class="cell-ro">${echapperHTML(l.N_FDM||'-')}</div></td>
         <td><div class="cell-ro">${echapperHTML(detail)}</div></td>
-        <td><div class="cell-ro">${echapperHTML(l.PAUSE||'—')}</div></td>
+        <td><div class="cell-ro">${echapperHTML(l.PAUSE||'-')}</div></td>
         <td><div class="cell-ro">${echapperHTML(l.REPAS||'0')}</div></td>
-        <td><div class="cell-ro">${echapperHTML(l.NUIT||'—')}</div></td>
-        <td><div class="total-cell has-value">${echapperHTML(l.TOTAL_HEURES||'—')}</div></td>
+        <td><div class="cell-ro">${echapperHTML(l.NUIT||'-')}</div></td>
+        <td><div class="total-cell ${totalLigneMin>0?'has-value':''}">${echapperHTML(totalAffiche)}</div></td>
       `;
       tbody.appendChild(tr);
-      totalMin += parseHeure(l.TOTAL_HEURES) || 0;
+      totalMin += totalLigneMin || 0;
       totalRepas += parseInt(l.REPAS)||0;
       totalNuitMin += parseHeure(l.NUIT)||0;
     });
@@ -757,17 +761,17 @@ function renderTableau() {
       <td><input class="cell-input left" type="text" value="${echapperHTML(ligne.chantier||'')}" oninput="updateLigne(${i},'chantier',this.value)"></td>
       <td><input class="input-nb" type="number" min="0" value="${echapperHTML(ligne.fdm||'')}" placeholder="—" oninput="updateLigne(${i},'fdm',this.value)"></td>
       <td><div class="detail-wrap">
-        <input type="text" value="${echapperHTML(ligne.hdebut||'')}" placeholder="07:30" maxlength="5" oninput="updateLigne(${i},'hdebut',this.value)">
+        <input type="text" inputmode="numeric" value="${echapperHTML(valeurHeureAffichage(ligne.hdebut,'hdebut'))}" placeholder="07:30" maxlength="5" oninput="updateChampHeure(this,${i},'hdebut')" onblur="finaliserChampHeure(this,${i},'hdebut')">
         <span class="detail-sep">→</span>
-        <input type="text" value="${echapperHTML(ligne.hfin||'')}" placeholder="17:00" maxlength="5" oninput="updateLigne(${i},'hfin',this.value)">
+        <input type="text" inputmode="numeric" value="${echapperHTML(valeurHeureAffichage(ligne.hfin,'hfin'))}" placeholder="17:00" maxlength="5" oninput="updateChampHeure(this,${i},'hfin')" onblur="finaliserChampHeure(this,${i},'hfin')">
       </div></td>
       <td><div class="detail-wrap">
-        <input type="text" value="${echapperHTML(ligne.pause||'')}" placeholder="00:00" maxlength="5" oninput="updateLigne(${i},'pause',this.value)" style="width:52px;">
+        <input type="text" inputmode="numeric" value="${echapperHTML(valeurHeureAffichage(ligne.pause,'pause'))}" placeholder="00:00" maxlength="5" oninput="updateChampHeure(this,${i},'pause')" onblur="finaliserChampHeure(this,${i},'pause')" style="width:52px;">
       </div></td>
       <td><input class="input-nb" type="number" min="0" max="3" value="${echapperHTML(ligne.repas||'')}" placeholder="0"
         oninput="updateLigne(${i},'repas',this.value===''?0:Math.min(3,Math.max(0,parseInt(this.value)||0)))"></td>
       <td><div class="detail-wrap">
-        <input type="text" value="${echapperHTML(ligne.nuit||'')}" placeholder="00:00" maxlength="5" oninput="updateLigne(${i},'nuit',this.value)" style="width:54px;">
+        <input type="text" inputmode="numeric" value="${echapperHTML(valeurHeureAffichage(ligne.nuit,'nuit'))}" placeholder="00:00" maxlength="5" oninput="updateChampHeure(this,${i},'nuit')" onblur="finaliserChampHeure(this,${i},'nuit')" style="width:54px;">
       </div></td>
       <td><div class="total-cell ${min>0?'has-value':''}">${formatHeures(min)}</div></td>
     `;
@@ -780,23 +784,128 @@ function renderTableau() {
 function updateLigne(i, champ, val) {
   if (feuilleVerrouillee) return;
   data.lignes[i][champ] = val;
+  majCalculLigne(i);
+  sauvegarder();
+}
+
+function majCalculLigne(i) {
   const tr = document.getElementById('tbody').rows[i];
+  if (!tr) return;
   const min = calculerMinutes(data.lignes[i]);
   const tc = tr.querySelector('.total-cell');
+  if (!tc) return;
   tc.textContent = formatHeures(min);
   tc.className = 'total-cell' + (min>0?' has-value':'');
-  updateTotaux(); sauvegarder();
+  updateTotaux();
+}
+
+function updateChampHeure(input, i, champ) {
+  if (feuilleVerrouillee) return;
+  const nettoye = nettoyerSaisieHeure(input.value);
+  if (input.value !== nettoye) input.value = nettoye;
+  input.classList.remove('heure-invalide');
+  data.lignes[i][champ] = nettoye;
+  majCalculLigne(i);
+  sauvegarder();
+}
+
+function finaliserChampHeure(input, i, champ) {
+  if (feuilleVerrouillee) return;
+  const original = input.value;
+  const normalise = normaliserHeure(original, heureMaxChamp(champ));
+  if (original.trim() && !normalise) {
+    input.classList.add('heure-invalide');
+    data.lignes[i][champ] = '';
+    input.value = '';
+    afficherToast('Format heure invalide : utilisez 7h30 ou 07:30');
+  } else {
+    input.classList.remove('heure-invalide');
+    data.lignes[i][champ] = normalise;
+    input.value = normalise;
+  }
+  majCalculLigne(i);
+  sauvegarder();
+}
+
+function nettoyerSaisieHeure(val) {
+  return String(val || '')
+    .toLowerCase()
+    .replace(/[.,;]/g, ':')
+    .replace(/h/g, ':')
+    .replace(/[^0-9:]/g, '')
+    .replace(/:{2,}/g, ':')
+    .slice(0, 5);
+}
+
+function normaliserHeure(val, maxHeure = 99) {
+  if (val === null || val === undefined || val === '') return '';
+  if (val instanceof Date && !isNaN(val)) {
+    return `${String(val.getUTCHours()).padStart(2,'0')}:${String(val.getUTCMinutes()).padStart(2,'0')}`;
+  }
+
+  let s = String(val).trim();
+  if (!s || s === '-' || s === '?' || s.charCodeAt(0) === 8212) return '';
+
+  const dateMatch = s.match(/^\d{4}-\d{2}-\d{2}T/);
+  if (dateMatch) {
+    const d = new Date(s);
+    if (!isNaN(d)) return `${String(d.getUTCHours()).padStart(2,'0')}:${String(d.getUTCMinutes()).padStart(2,'0')}`;
+  }
+
+  s = nettoyerSaisieHeure(s);
+  if (!s) return '';
+
+  let h, mn;
+  if (/^\d{1,2}$/.test(s)) {
+    h = parseInt(s, 10); mn = 0;
+  } else if (/^\d{3,4}$/.test(s)) {
+    h = parseInt(s.slice(0, -2), 10); mn = parseInt(s.slice(-2), 10);
+  } else {
+    const m = s.match(/^(\d{1,2}):(\d{0,2})$/);
+    if (!m) return '';
+    h = parseInt(m[1], 10); mn = m[2] === '' ? 0 : parseInt(m[2].padEnd(2, '0'), 10);
+  }
+
+  if (!Number.isFinite(h) || !Number.isFinite(mn) || h < 0 || h > maxHeure || mn < 0 || mn > 59) return '';
+  return `${String(h).padStart(2,'0')}:${String(mn).padStart(2,'0')}`;
+}
+
+function heureMaxChamp(champ) {
+  return champ === 'hdebut' || champ === 'hfin' ? 23 : 99;
+}
+
+function valeurHeureAffichage(val, champ) {
+  return normaliserHeure(val, heureMaxChamp(champ)) || nettoyerSaisieHeure(val);
+}
+
+function normaliserLigneHeures(ligne) {
+  ['hdebut','hfin','pause','nuit'].forEach(champ => {
+    ligne[champ] = normaliserHeure(ligne[champ], heureMaxChamp(champ)) || '';
+  });
+  return ligne;
+}
+
+function normaliserLigneServeur(l) {
+  return {
+    ...l,
+    H_DEBUT: normaliserHeure(l.H_DEBUT, 23) || '',
+    H_FIN: normaliserHeure(l.H_FIN, 23) || '',
+    PAUSE: normaliserHeure(l.PAUSE) || '',
+    NUIT: normaliserHeure(l.NUIT) || '',
+    TOTAL_HEURES: normaliserHeure(l.TOTAL_HEURES) || l.TOTAL_HEURES || ''
+  };
+}
+
+function normaliserToutesLesHeures() {
+  data.lignes.forEach(l => normaliserLigneHeures(l));
 }
 
 // ===== CALCULS =====
 function parseHeure(str) {
-  if (!str) return null;
-  str = String(str).trim().replace('h',':').replace('.',':');
-  const m = str.match(/^(\d{1,2}):?(\d{2})?$/);
-  if (!m) return null;
-  const h=parseInt(m[1]), mn=parseInt(m[2]||'0');
-  if (h<0||h>99||mn<0||mn>59) return null;
-  return h*60+mn;
+  const normalise = normaliserHeure(str);
+  if (!normalise) return null;
+  const [h, mn] = normalise.split(':').map(n => parseInt(n, 10));
+  return h * 60 + mn;
 }
 
 function calculerMinutes(ligne) {
@@ -883,6 +992,8 @@ function sauvegarder(options = {}) {
 async function envoyerGoogleSheets() {
   const semaineDu = document.getElementById('date-debut').value;
   if (!semaineDu) { afficherToast('Renseigne la date de début'); return false; }
+  normaliserToutesLesHeures();
+  renderTableau();
   const lignesNonVides = data.lignes.filter(l=>l.jour||l.chantier||l.hdebut);
   if (lignesNonVides.length===0) { afficherToast('Aucune donnée à envoyer'); return false; }
   afficherStatutEnvoi('Envoi en cours...');
@@ -1021,7 +1132,7 @@ function creerLigneVide() {
 }
 
 function ligneServeurVersLocale(l) {
-  return {
+  return normaliserLigneHeures({
     jour: l.JOUR || '',
     bl: l.N_BL || '',
     chantier: l.CHANTIER || '',
@@ -1031,7 +1142,7 @@ function ligneServeurVersLocale(l) {
     pause: l.PAUSE || '',
     repas: l.REPAS || 0,
     nuit: l.NUIT || ''
-  };
+  });
 }
 
 function ajouterLigne() {
