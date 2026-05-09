@@ -119,10 +119,11 @@
   .total-cell { font-family:var(--font-mono); font-size:13px; font-weight:600; text-align:center; padding:7px 6px; height:36px; display:flex; align-items:center; justify-content:center; background:rgba(0,0,0,0.03); color:var(--noir); }
   .total-cell.has-value { color:var(--vert); }
   .detail-wrap { display:flex; align-items:center; justify-content:center; gap:3px; padding:0 4px; }
-  .time-input { font-family:var(--font-mono); font-size:12px; border:none; background:transparent; color:var(--noir); width:58px; text-align:center; outline:none; padding:7px 2px; height:36px; cursor:pointer; }
-  .time-input:focus { background:#fef3cd; }
-  .time-input::-webkit-calendar-picker-indicator { opacity:0; display:none; }
-  .detail-sep { font-family:var(--font-mono); font-size:13px; color:var(--gris-fonce); }
+  .time-field { position:relative; display:inline-flex; align-items:center; justify-content:center; min-width:44px; height:36px; padding:0 2px; }
+  .time-display { font-family:var(--font-mono); font-size:12px; color:var(--noir); line-height:1; pointer-events:none; }
+  .time-input { position:absolute; inset:0; width:100%; height:100%; opacity:0; border:0; cursor:pointer; }
+  .time-input:focus + .time-display { background:#fef3cd; }
+  .detail-sep { font-family:var(--font-mono); font-size:12px; color:var(--gris-fonce); }
   tfoot tr td { background:var(--gris-leger); border-right:var(--bordure-fine); border-top:var(--bordure); padding:8px 6px; font-family:var(--font-mono); font-size:11px; font-weight:600; text-align:center; color:var(--noir); }
   tfoot .totaux-label { text-align:left; padding-left:12px; text-transform:uppercase; }
   tfoot .grand-total { font-size:15px; color:var(--vert); background:#e8f5ee; border-right:none; }
@@ -763,7 +764,7 @@ function renderTableau() {
       <td><input class="input-nb" type="number" min="0" value="${echapperHTML(ligne.fdm||'')}" placeholder="—" oninput="updateLigne(${i},'fdm',this.value)"></td>
       <td><div class="detail-wrap">
         ${renderChampHeureInput(i,'hdebut',ligne.hdebut)}
-        <span class="detail-sep">-></span>
+        <span class="detail-sep">-</span>
         ${renderChampHeureInput(i,'hfin',ligne.hfin)}
       </div></td>
       <td><div class="detail-wrap">
@@ -802,13 +803,21 @@ function majCalculLigne(i) {
 
 function renderChampHeureInput(i, champ, val) {
   const value = normaliserDemiHeure(val, heureMaxChamp(champ));
-  return `<input class="time-input" type="time" value="${echapperHTML(value)}" min="00:00" max="23:30" step="1800" onchange="updateChampHeureInput(this,${i},'${champ}')" oninput="updateChampHeureInput(this,${i},'${champ}')">`;
+  const display = value || '--:--';
+  return `
+    <span class="time-field">
+      <input class="time-input" type="time" value="${echapperHTML(value)}" min="00:00" max="23:30" step="1800" aria-label="${champ}" onchange="updateChampHeureInput(this,${i},'${champ}')" oninput="updateChampHeureInput(this,${i},'${champ}')">
+      <span class="time-display">${echapperHTML(display)}</span>
+    </span>
+  `;
 }
 
 function updateChampHeureInput(input, i, champ) {
   if (feuilleVerrouillee) return;
   data.lignes[i][champ] = normaliserDemiHeure(input.value, heureMaxChamp(champ));
   input.value = data.lignes[i][champ];
+  const display = input.parentElement && input.parentElement.querySelector('.time-display');
+  if (display) display.textContent = data.lignes[i][champ] || '--:--';
   majCalculLigne(i);
   sauvegarder();
 }
