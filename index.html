@@ -28,7 +28,7 @@
   /* LOGIN */
   #login-screen { display:flex; align-items:center; justify-content:center; min-height:80vh; }
   .login-card { background:var(--blanc); border:2px solid var(--noir); box-shadow:6px 6px 0 var(--noir); padding:36px 32px 40px; max-width:360px; width:100%; text-align:center; }
-  .login-logo { width:112px; height:112px; object-fit:contain; display:block; margin:0 auto 18px; }
+  .login-logo { width:140px; height:140px; object-fit:contain; display:block; margin:0 auto 18px; }
   .login-titre { font-size:20px; font-weight:600; line-height:1.2; margin-bottom:6px; }
   .login-sous-titre { font-family:var(--font-mono); font-size:10px; letter-spacing:1.5px; text-transform:uppercase; color:var(--gris-fonce); margin-bottom:32px; }
   .pin-label { font-family:var(--font-mono); font-size:11px; font-weight:600; letter-spacing:1px; text-transform:uppercase; color:var(--gris-fonce); margin-bottom:8px; display:block; text-align:center; }
@@ -60,7 +60,7 @@
   /* EN-TÊTE */
   .entete { padding:20px 24px 16px; border-bottom:var(--bordure); display:flex; justify-content:space-between; align-items:flex-start; gap:16px; flex-wrap:wrap; }
   .entete-titre-zone { display:flex; align-items:center; gap:16px; }
-  .app-logo { width:76px; height:76px; object-fit:contain; flex:0 0 auto; }
+  .app-logo { width:88px; height:88px; object-fit:contain; flex:0 0 auto; }
   .titre-doc { font-size:22px; font-weight:600; letter-spacing:-0.5px; color:var(--noir); line-height:1.1; }
   .semaine-zone { display:flex; gap:32px; align-items:center; flex-wrap:wrap; }
   .semaine-label { font-family:var(--font-mono); font-size:11px; font-weight:600; letter-spacing:1.5px; text-transform:uppercase; color:var(--gris-fonce); margin-bottom:4px; }
@@ -157,7 +157,7 @@
   /* RESPONSIVE */
   @media (max-width:640px) {
     .entete{flex-direction:column;gap:10px} .titre-doc{font-size:16px}
-    .entete-titre-zone{align-items:flex-start}.app-logo{width:64px;height:64px}
+    .entete-titre-zone{align-items:flex-start}.app-logo{width:76px;height:76px}
     .identite{grid-template-columns:1fr} .id-cell{border-right:none;border-bottom:var(--bordure-fine)} .id-cell:last-child{border-bottom:none}
     .actions{padding:12px} .btn{font-size:10px;padding:9px 14px}
   }
@@ -173,7 +173,7 @@
 <!-- LOGIN -->
 <div id="login-screen">
   <div class="login-card">
-    <img class="login-logo" src="logo-pointage-transparent.png" alt="">
+    <img class="login-logo" src="logo-pointage-interface.png" alt="">
     <div class="login-titre">FEUILLE DE POINTAGE<br>HR OCCITANIE</div>
     <div class="login-sous-titre">Connexion</div>
     <label class="pin-label" for="pin-input">Votre code PIN</label>
@@ -208,7 +208,7 @@
     <!-- EN-TÊTE -->
     <div class="entete">
       <div class="entete-titre-zone">
-        <img class="app-logo" src="logo-pointage-transparent.png" alt="">
+        <img class="app-logo" src="logo-pointage-interface.png" alt="">
         <div class="titre-doc">FEUILLE DE POINTAGE<br>HR OCCITANIE</div>
       </div>
       <div class="semaine-zone">
