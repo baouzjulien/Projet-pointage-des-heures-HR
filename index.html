@@ -434,7 +434,7 @@ async function seConnecter() {
   errEl.textContent = '';
   btn.textContent = 'Connexion...'; btn.disabled = true;
   try {
-    const res = await fetch(`${API_URL}?action=login&pin=${encodeURIComponent(pin)}`);
+    const res = await fetch(`${API_URL}?action=login&pin=${encodeURIComponent(pin)}&userAgent=${encodeURIComponent(navigator.userAgent)}`);
     const json = await res.json();
     if (json.ok) {
       employe = json.employe;
