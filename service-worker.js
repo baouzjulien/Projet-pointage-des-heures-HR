@@ -1,10 +1,13 @@
-const CACHE_NAME = 'pointage-hr-v27';
+const CACHE_NAME = 'pointage-hr-v28';
 const FILES = [
   './index.html',
   './manifest.json',
   './favicon.ico',
   './favicon-32.png',
   './favicon-16.png',
+  './favicon-white.ico',
+  './favicon-white-32.png',
+  './favicon-white-16.png',
   './logo-pointage-transparent.png',
   './logo-pointage-interface.png',
   './icon-192.png',
