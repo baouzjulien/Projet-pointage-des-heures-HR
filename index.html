@@ -115,6 +115,9 @@
   .cell-ro.left { justify-content:flex-start; text-align:left; white-space:normal; line-height:1.25; }
   .jour-select { font-family:var(--font-sans); font-size:12px; font-weight:500; border:none; background:transparent; color:var(--noir); padding:7px 4px; width:100%; height:36px; outline:none; text-align:center; cursor:pointer; -webkit-appearance:none; appearance:none; }
   .jour-select:focus { background:#fef3cd; }
+  .jour-cell { display:flex; align-items:center; justify-content:center; gap:6px; padding:0 4px; }
+  .delete-line-check { width:18px; height:18px; accent-color:var(--rouge); flex:0 0 auto; cursor:pointer; }
+  tr.ligne-a-supprimer { background:#fdecea!important; }
   .input-nb { font-family:var(--font-mono); font-size:14px; font-weight:600; border:none; background:transparent; color:var(--noir); width:100%; height:36px; text-align:center; outline:none; padding:0 4px; }
   .input-nb:focus { background:#fef3cd; }
   .input-nb::-webkit-inner-spin-button,.input-nb::-webkit-outer-spin-button{-webkit-appearance:none;margin:0}
@@ -295,7 +298,10 @@
     <div class="actions" id="actions-employe" style="display:none;">
       <button class="btn btn-success" id="btn-signer-action" onclick="signerEmploye()">✔ Signer &amp; Envoyer</button>
       <button class="btn btn-primary" onclick="imprimerFeuille()">🖨 Imprimer</button>
-      <button class="btn" onclick="ajouterLigne()">+ Ligne</button>
+      <button class="btn" id="btn-ajouter-ligne" onclick="ajouterLigne()">+ Ligne</button>
+      <button class="btn btn-danger" id="btn-mode-suppression" onclick="entrerModeSuppressionLignes()">Supprimer ligne</button>
+      <button class="btn btn-danger" id="btn-confirmer-suppression" onclick="supprimerLignesSelectionnees()" style="display:none;" disabled>Supprimer selection</button>
+      <button class="btn" id="btn-annuler-suppression" onclick="annulerSuppressionLignes()" style="display:none;">Annuler</button>
       <button class="btn btn-danger" onclick="reinitialiser()">↺ Réinitialiser</button>
       <div style="flex:1"></div>
       <span style="font-family:var(--font-mono);font-size:10px;color:var(--gris-fonce);" id="save-status">Sauvegarde auto ✓</span>
@@ -327,6 +333,8 @@ let listeEmployes = [], employeActif = null, donneesActives = null;
 let feuilleVerrouillee = false;
 let semaineAffichee = null;
 let verificationValidationId = 0;
+let modeSuppressionLignes = false;
+let lignesASupprimer = new Set();
 
 // ===== FORMAT DATE COURT =====
 function echapperHTML(val) {
@@ -466,6 +474,7 @@ function seDeconnecter() {
 
 // ===== VUE EMPLOYÉ =====
 function afficherVueEmploye() {
+  annulerSuppressionLignes(false);
   document.getElementById('row-engin').style.display = 'flex';
   document.getElementById('btn-signer').style.display = 'inline-flex';
   document.getElementById('btn-signer-action').style.display = 'inline-flex';
@@ -483,6 +492,7 @@ function getClePointage(semaine) {
 }
 
 function chargerDonneesLocales(semaine, options = {}) {
+  annulerSuppressionLignes(false);
   semaine = semaine || document.getElementById('date-debut').value || getSemaineCourante();
   semaineAffichee = semaine;
   feuilleVerrouillee = false;
@@ -538,7 +548,10 @@ function majEtatVerrouillage() {
   const banner = document.getElementById('verrou-banner');
   const btnSigner = document.getElementById('btn-signer');
   const btnSignerAction = document.getElementById('btn-signer-action');
-  const btnAjout = document.querySelector('#actions-employe button[onclick="ajouterLigne()"]');
+  const btnAjout = document.getElementById('btn-ajouter-ligne');
+  const btnSuppression = document.getElementById('btn-mode-suppression');
+  const btnConfirmerSuppression = document.getElementById('btn-confirmer-suppression');
+  const btnAnnulerSuppression = document.getElementById('btn-annuler-suppression');
   const btnReinit = document.querySelector('#actions-employe button[onclick="reinitialiser()"]');
 
   if (feuilleVerrouillee) {
@@ -546,6 +559,9 @@ function majEtatVerrouillage() {
     if (btnSigner) btnSigner.style.display = 'none';
     if (btnSignerAction) btnSignerAction.style.display = 'none';
     if (btnAjout) btnAjout.disabled = true;
+    if (btnSuppression) btnSuppression.disabled = true;
+    if (btnConfirmerSuppression) btnConfirmerSuppression.disabled = true;
+    if (btnAnnulerSuppression) btnAnnulerSuppression.disabled = true;
     if (btnReinit) btnReinit.style.display = 'none';
     // Désactiver tous les inputs du tableau
     document.querySelectorAll('#tbody input, #tbody select').forEach(el => el.disabled = true);
@@ -555,6 +571,9 @@ function majEtatVerrouillage() {
     if (btnSigner) btnSigner.disabled = false;
     if (btnSignerAction) btnSignerAction.disabled = false;
     if (btnAjout) btnAjout.disabled = false;
+    if (btnSuppression) btnSuppression.disabled = false;
+    if (btnAnnulerSuppression) btnAnnulerSuppression.disabled = false;
+    majBoutonsSuppressionLignes();
     if (btnReinit) { btnReinit.style.display = 'inline-flex'; btnReinit.disabled = false; }
     document.querySelectorAll('#tbody input, #tbody select').forEach(el => el.disabled = false);
     document.getElementById('engin').readOnly = false;
@@ -563,6 +582,7 @@ function majEtatVerrouillage() {
 
 // ===== VUE RESPONSABLE =====
 async function afficherVueResponsable() {
+  annulerSuppressionLignes(false);
   document.getElementById('row-engin').style.display = 'flex';
   document.getElementById('btn-signer').style.display = 'none';
   document.getElementById('btn-valider').style.display = 'inline-flex';
@@ -756,12 +776,16 @@ function renderTableau() {
   tbody.innerHTML = '';
   data.lignes.forEach((ligne, i) => {
     const tr = document.createElement('tr');
+    if (modeSuppressionLignes && lignesASupprimer.has(i)) tr.classList.add('ligne-a-supprimer');
     const min = calculerMinutes(ligne);
+    const checkboxSuppression = modeSuppressionLignes
+      ? `<input class="delete-line-check" type="checkbox" ${lignesASupprimer.has(i)?'checked':''} onchange="toggleLigneSuppression(${i},this.checked)" aria-label="Selectionner la ligne ${i + 1}">`
+      : '';
     tr.innerHTML = `
-      <td><select class="jour-select" onchange="updateLigne(${i},'jour',this.value)">
-        <option value="">—</option>
+      <td><div class="jour-cell">${checkboxSuppression}<select class="jour-select" onchange="updateLigne(${i},'jour',this.value)">
+        <option value="">-</option>
         ${JOURS.map(j=>`<option value="${j}" ${ligne.jour===j?'selected':''}>${j}</option>`).join('')}
-      </select></td>
+      </select></div></td>
       <td><input class="input-nb" type="number" min="0" value="${echapperHTML(ligne.bl||'')}" placeholder="—" oninput="updateLigne(${i},'bl',this.value)"></td>
       <td><input class="cell-input left" type="text" value="${echapperHTML(ligne.chantier||'')}" oninput="updateLigne(${i},'chantier',this.value)"></td>
       <td><input class="input-nb" type="number" min="0" value="${echapperHTML(ligne.fdm||'')}" placeholder="—" oninput="updateLigne(${i},'fdm',this.value)"></td>
@@ -783,6 +807,7 @@ function renderTableau() {
     tbody.appendChild(tr);
   });
   updateTotaux();
+  majBoutonsSuppressionLignes();
   if (feuilleVerrouillee) majEtatVerrouillage();
 }
 
@@ -1153,8 +1178,62 @@ function ligneServeurVersLocale(l) {
   });
 }
 
+
+function entrerModeSuppressionLignes() {
+  if (feuilleVerrouillee) return;
+  if (!data.lignes || data.lignes.length === 0) return;
+  modeSuppressionLignes = true;
+  lignesASupprimer = new Set();
+  renderTableau();
+  majBoutonsSuppressionLignes();
+}
+
+function annulerSuppressionLignes(rerendre = true) {
+  modeSuppressionLignes = false;
+  lignesASupprimer = new Set();
+  majBoutonsSuppressionLignes();
+  if (rerendre && employe && employe.role !== 'responsable') renderTableau();
+}
+
+function toggleLigneSuppression(index, cochee) {
+  if (cochee) lignesASupprimer.add(index);
+  else lignesASupprimer.delete(index);
+  const tr = document.getElementById('tbody').rows[index];
+  if (tr) tr.classList.toggle('ligne-a-supprimer', cochee);
+  majBoutonsSuppressionLignes();
+}
+
+function majBoutonsSuppressionLignes() {
+  const btnMode = document.getElementById('btn-mode-suppression');
+  const btnConfirmer = document.getElementById('btn-confirmer-suppression');
+  const btnAnnuler = document.getElementById('btn-annuler-suppression');
+  if (!btnMode || !btnConfirmer || !btnAnnuler) return;
+
+  btnMode.style.display = modeSuppressionLignes ? 'none' : 'inline-flex';
+  btnConfirmer.style.display = modeSuppressionLignes ? 'inline-flex' : 'none';
+  btnAnnuler.style.display = modeSuppressionLignes ? 'inline-flex' : 'none';
+  btnConfirmer.disabled = feuilleVerrouillee || lignesASupprimer.size === 0;
+  btnMode.disabled = feuilleVerrouillee;
+}
+
+function supprimerLignesSelectionnees() {
+  if (feuilleVerrouillee || lignesASupprimer.size === 0) return;
+  const total = lignesASupprimer.size;
+  if (!confirm(`Supprimer ${total} ligne(s) selectionnee(s) ?`)) return;
+
+  data.lignes = data.lignes.filter((ligne, index) => !lignesASupprimer.has(index));
+  if (data.lignes.length === 0) data.lignes.push(creerLigneVide());
+
+  modeSuppressionLignes = false;
+  lignesASupprimer = new Set();
+  renderTableau();
+  sauvegarder();
+  afficherToast(`${total} ligne(s) supprimee(s)`);
+}
+
 function ajouterLigne() {
   if (feuilleVerrouillee) return;
+  if (modeSuppressionLignes) annulerSuppressionLignes(false);
   data.lignes.push(creerLigneVide());
   renderTableau(); sauvegarder(); afficherToast('Ligne ajoutée');
 }
@@ -1168,6 +1247,7 @@ function confirmerReinit(oui) {
   document.getElementById('confirm-overlay').style.display = 'none';
   if (!oui) return;
   feuilleVerrouillee = false;
+  annulerSuppressionLignes(false);
   data = {version:VERSION, lignes:Array.from({length:NB_LIGNES_DEFAUT},()=>creerLigneVide()), visas:{chauffeur:false,direction:false}};
   document.getElementById('engin').value='';
   document.getElementById('engin').readOnly=false;
