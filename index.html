@@ -705,7 +705,7 @@ function renderTableauLecture(lignes) {
       const tr = document.createElement('tr');
       const detail = l.H_DEBUT && l.H_FIN ? `${l.H_DEBUT} -> ${l.H_FIN}` : '-';
       const chantierComplet = l.CHANTIER || '-';
-      const totalLigneMin = parseHeure(l.TOTAL_HEURES) || calculerMinutes(ligneServeurVersLocale(l));
+      const totalLigneMin = calculerMinutesLigne(l);
       const totalAffiche = formatHeures(totalLigneMin);
       tr.innerHTML = `
         <td><div class="cell-ro">${echapperHTML(l.JOUR||'-')}</div></td>
@@ -943,13 +943,19 @@ function parseHeure(str) {
 
 function calculerMinutes(ligne) {
   const debut=parseHeure(ligne.hdebut), fin=parseHeure(ligne.hfin);
-  const pause=parseHeure(ligne.pause)||0, nuit=parseHeure(ligne.nuit)||0;
-  let heuresJour=0;
-  if (debut!==null && fin!==null) {
-    let diff=fin-debut; if(diff<0) diff+=24*60;
-    heuresJour=Math.max(0,diff-pause);
+  const pause=parseHeure(ligne.pause)||0;
+  if (debut===null || fin===null) return 0;
+  let diff=fin-debut;
+  if(diff<0) diff+=24*60;
+  return Math.max(0,diff-pause);
+}
+
+function calculerMinutesLigne(ligne) {
+  if (!ligne) return 0;
+  if ('H_DEBUT' in ligne || 'H_FIN' in ligne || 'PAUSE' in ligne) {
+    return calculerMinutes(ligneServeurVersLocale(ligne));
   }
-  return heuresJour+nuit;
+  return calculerMinutes(ligne);
 }
 
 function formatHeures(min) {
@@ -1268,7 +1274,7 @@ function construireCSV(lignes, nomEmp, prenomEmp, engin, debut, fin) {
   csv += 'JOUR;N° BL;CHANTIERS / CLIENTS;N° FDM;H. DÉBUT;H. FIN;PAUSE;TOTAL HEURES;REPAS;NUIT\n';
   lignes.forEach(l => {
     if (!l.JOUR && !l.jour && !l.CHANTIER && !l.chantier) return;
-    csv += `${l.JOUR||l.jour||''};${l.N_BL||l.bl||''};${l.CHANTIER||l.chantier||''};${l.N_FDM||l.fdm||''};${l.H_DEBUT||l.hdebut||''};${l.H_FIN||l.hfin||''};${l.PAUSE||l.pause||''};${l.TOTAL_HEURES||formatHeures(calculerMinutes(l))};${l.REPAS||l.repas||0};${l.NUIT||l.nuit||''}\n`;
+    csv += `${l.JOUR||l.jour||''};${l.N_BL||l.bl||''};${l.CHANTIER||l.chantier||''};${l.N_FDM||l.fdm||''};${l.H_DEBUT||l.hdebut||''};${l.H_FIN||l.hfin||''};${l.PAUSE||l.pause||''};${formatHeures(calculerMinutesLigne(l))};${l.REPAS||l.repas||0};${l.NUIT||l.nuit||''}\n`;
   });
   return csv;
 }
@@ -1308,9 +1314,9 @@ function exportExcel() {
   let totalMin=0, totalRepas=0, totalNuitMin=0;
   lignes.forEach(l => {
     if (!l.JOUR && !l.jour && !l.CHANTIER && !l.chantier) return;
-    const total = l.TOTAL_HEURES || formatHeures(calculerMinutes(l));
+    const total = formatHeures(calculerMinutesLigne(l));
     wsData.push([l.JOUR||l.jour||'', l.N_BL||l.bl||'', l.CHANTIER||l.chantier||'', l.N_FDM||l.fdm||'', l.H_DEBUT||l.hdebut||'', l.H_FIN||l.hfin||'', l.PAUSE||l.pause||'', total, l.REPAS||l.repas||0, l.NUIT||l.nuit||'']);
-    totalMin += parseHeure(total)||calculerMinutes(l)||0;
+    totalMin += calculerMinutesLigne(l);
     totalRepas += parseInt(l.REPAS||l.repas)||0;
     totalNuitMin += parseHeure(l.NUIT||l.nuit)||0;
   });
