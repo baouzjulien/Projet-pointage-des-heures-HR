@@ -335,6 +335,11 @@ let semaineAffichee = null;
 let verificationValidationId = 0;
 let modeSuppressionLignes = false;
 let lignesASupprimer = new Set();
+let timerSauvegardeServeur = null;
+let sauvegardeServeurEnCours = null;
+let derniereSauvegardeServeur = '';
+let sauvegardeServeurDemandee = false;
+const DELAI_SAUVEGARDE_AUTO = 1500;
 
 // ===== FORMAT DATE COURT =====
 function echapperHTML(val) {
@@ -372,6 +377,13 @@ function afficherStatutEnvoi(message, couleur = 'var(--gris-fonce)') {
   if (!st) return;
   st.textContent = message;
   st.style.color = couleur;
+}
+
+function viderTimerSauvegardeServeur() {
+  if (timerSauvegardeServeur) {
+    clearTimeout(timerSauvegardeServeur);
+    timerSauvegardeServeur = null;
+  }
 }
 
 function formatDateCourte(str) {
@@ -992,8 +1004,8 @@ function definirSemaine(debut) {
   document.getElementById('date-fin').value = toISO(dimanche);
 }
 
-function changerSemaine(delta) {
-  if (employe && employe.role !== 'responsable') sauvegarder();
+async function changerSemaine(delta) {
+  if (employe && employe.role !== 'responsable') await flushSauvegardeServeur({ silencieux:false });
   const base = document.getElementById('date-debut').value || semaineAffichee || getSemaineCourante();
   const d = dateDepuisISO(base);
   d.setDate(d.getDate() + delta * 7);
@@ -1005,8 +1017,8 @@ function changerSemaine(delta) {
   }
 }
 
-function allerSemaineCourante() {
-  if (employe && employe.role !== 'responsable') sauvegarder();
+async function allerSemaineCourante() {
+  if (employe && employe.role !== 'responsable') await flushSauvegardeServeur({ silencieux:false });
   const semaine = getSemaineCourante();
   if (employe && employe.role === 'responsable') {
     if (employeActif) chargerFeuille(employeActif, semaine);
@@ -1015,48 +1027,119 @@ function allerSemaineCourante() {
   }
 }
 
-// ===== SAUVEGARDE LOCALE =====
+// ===== SAUVEGARDE AUTO =====
+function preparerPayloadSauvegarde() {
+  const semaineDu = document.getElementById('date-debut').value;
+  normaliserToutesLesHeures();
+  const lignesNonVides = data.lignes.filter(l => l.jour || l.chantier || l.hdebut || l.hfin || l.pause || l.nuit || l.bl || l.fdm || l.repas);
+  return {
+    semaineDu,
+    lignesNonVides,
+    signature: JSON.stringify({
+      idEmploye: employe && employe.id,
+      engin: document.getElementById('engin').value || '',
+      semaineDu,
+      semaineAu: document.getElementById('date-fin').value,
+      lignes: lignesNonVides
+    })
+  };
+}
+
 function sauvegarder(options = {}) {
-  if (!employe || employe.role==='responsable' || (feuilleVerrouillee && !options.forcer)) return;
+  if (!employe || employe.role === 'responsable' || (feuilleVerrouillee && !options.forcer)) return;
   data['engin'] = document.getElementById('engin').value;
   data['date-debut'] = document.getElementById('date-debut').value;
   data['date-fin'] = document.getElementById('date-fin').value;
   data.version = VERSION;
   localStorage.setItem(getClePointage(data['date-debut']), JSON.stringify(data));
-  afficherStatutEnvoi('Sauvegardé localement ✓');
-  setTimeout(()=>afficherStatutEnvoi('Sauvegarde auto ✓'),1500);
+
+  if (options.localSeulement) return;
+
+  sauvegardeServeurDemandee = true;
+  afficherStatutEnvoi('Sauvegarde...', 'var(--gris-fonce)');
+
+  if (options.immediat) {
+    envoyerGoogleSheets({ silencieux: true, autoriserVide: true });
+    return;
+  }
+
+  programmerSauvegardeServeur();
+}
+
+function programmerSauvegardeServeur() {
+  viderTimerSauvegardeServeur();
+  timerSauvegardeServeur = setTimeout(() => {
+    timerSauvegardeServeur = null;
+    envoyerGoogleSheets({ silencieux: true, autoriserVide: true });
+  }, DELAI_SAUVEGARDE_AUTO);
+}
+
+async function flushSauvegardeServeur(options = {}) {
+  if (!employe || employe.role === 'responsable' || feuilleVerrouillee) return true;
+  if (!sauvegardeServeurDemandee && !timerSauvegardeServeur && !options.forcer) return true;
+  viderTimerSauvegardeServeur();
+  return envoyerGoogleSheets({ silencieux: options.silencieux !== false, autoriserVide: true, rerendre: false });
 }
 
 // ===== ENVOI GOOGLE SHEETS =====
-async function envoyerGoogleSheets() {
-  const semaineDu = document.getElementById('date-debut').value;
-  if (!semaineDu) { afficherToast('Renseigne la date de début'); return false; }
-  normaliserToutesLesHeures();
-  renderTableau();
-  const lignesNonVides = data.lignes.filter(l=>l.jour||l.chantier||l.hdebut);
-  if (lignesNonVides.length===0) { afficherToast('Aucune donnée à envoyer'); return false; }
-  afficherStatutEnvoi('Envoi en cours...');
-  try {
+async function envoyerGoogleSheets(options = {}) {
+  if (!employe || employe.role === 'responsable') return false;
+  const { semaineDu, lignesNonVides, signature } = preparerPayloadSauvegarde();
+  if (!semaineDu) {
+    if (!options.silencieux) afficherToast('Renseigne la date de début');
+    return false;
+  }
+  if (!options.autoriserVide && lignesNonVides.length === 0) {
+    if (!options.silencieux) afficherToast('Aucune donnée à envoyer');
+    return false;
+  }
+  if (!options.forcer && signature === derniereSauvegardeServeur) {
+    sauvegardeServeurDemandee = false;
+    afficherStatutEnvoi('Sauvegardé ✓', 'var(--vert)');
+    return true;
+  }
+
+  viderTimerSauvegardeServeur();
+  if (options.rerendre) renderTableau();
+  afficherStatutEnvoi('Sauvegarde...', 'var(--gris-fonce)');
+
+  const requete = async () => {
     const res = await fetch(API_URL, {
-      method:'POST',
+      method: 'POST',
       body: JSON.stringify({
-        action:'sauvegarder', idEmploye:employe.id, nom:employe.nom, prenom:employe.prenom,
+        action: 'sauvegarder',
+        idEmploye: employe.id,
+        nom: employe.nom,
+        prenom: employe.prenom,
         engin: document.getElementById('engin').value || '',
-        semaineDu, semaineAu:document.getElementById('date-fin').value,
-        lignes:lignesNonVides.map(l=>({...l, total:formatHeures(calculerMinutes(l))}))
+        semaineDu,
+        semaineAu: document.getElementById('date-fin').value,
+        lignes: lignesNonVides.map(l => ({ ...l, total: formatHeures(calculerMinutes(l)) }))
       })
     });
-    const json = await res.json();
+    return res.json();
+  };
+
+  try {
+    sauvegardeServeurEnCours = sauvegardeServeurEnCours ? sauvegardeServeurEnCours.then(requete, requete) : requete();
+    const json = await sauvegardeServeurEnCours;
+    sauvegardeServeurEnCours = null;
+
     if (!json.ok) {
       afficherStatutEnvoi('Non envoyé — réessayez', 'var(--rouge)');
-      afficherToast('Non envoyé — réessayez');
+      if (!options.silencieux) afficherToast('Non envoyé — réessayez');
       return false;
     }
-    afficherStatutEnvoi('Envoyé ✓', 'var(--vert)');
+
+    derniereSauvegardeServeur = signature;
+    sauvegardeServeurDemandee = false;
+    afficherStatutEnvoi('Sauvegardé ✓', 'var(--vert)');
     return true;
-  } catch(e) {
+  } catch (e) {
+    sauvegardeServeurEnCours = null;
+    sauvegardeServeurDemandee = true;
     afficherStatutEnvoi('Non envoyé — réessayez', 'var(--rouge)');
-    afficherToast('Non envoyé — vérifiez le réseau puis réessayez');
+    if (!options.silencieux) afficherToast('Non envoyé — vérifiez le réseau puis réessayez');
     return false;
   }
 }
@@ -1109,7 +1192,7 @@ async function verifierValidationResponsable() {
       majBoutonsSignature(false);
     }
 
-    sauvegarder({ forcer:true });
+    sauvegarder({ forcer:true, localSeulement:true });
     renderTableau();
     majEtatVerrouillage();
   } catch(e) {
@@ -1128,7 +1211,7 @@ async function signerEmploye() {
   const btns = [document.getElementById('btn-signer'), document.getElementById('btn-signer-action')];
   btns.forEach(b=>{if(b){b.textContent='...';b.disabled=true;}});
   try {
-    const ok = await envoyerGoogleSheets();
+    const ok = await envoyerGoogleSheets({ silencieux:false, autoriserVide:false, rerendre:true, forcer:true });
     if (!ok) { majBoutonsSignature(data.visas && data.visas.chauffeur); return; }
     const res = await fetch(API_URL, {
       method:'POST',
@@ -1140,7 +1223,7 @@ async function signerEmploye() {
       data.visas.chauffeur=true; data.visas.dateChauffeur=maintenant;
       setVisaStatus('chauffeur', true, maintenant);
       majBoutonsSignature(true);
-      sauvegarder();
+      sauvegarder({ localSeulement:true });
       afficherToast('Feuille signée et envoyée ✓');
       // Vérifier si déjà validé par le responsable
       verifierValidationResponsable();
@@ -1340,6 +1423,9 @@ function afficherToast(msg) {
 }
 
 document.addEventListener('DOMContentLoaded', init);
+window.addEventListener('online', () => { if (sauvegardeServeurDemandee) flushSauvegardeServeur({ silencieux:true }); });
+document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') flushSauvegardeServeur({ silencieux:true }); });
+window.addEventListener('beforeunload', () => { if (employe && employe.role !== 'responsable') sauvegarder({ immediat:true }); });
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('./service-worker.js');
 </script>
 </body>
