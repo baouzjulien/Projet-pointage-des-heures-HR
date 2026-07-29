@@ -339,6 +339,7 @@ let timerSauvegardeServeur = null;
 let sauvegardeServeurEnCours = null;
 let derniereSauvegardeServeur = '';
 let sauvegardeServeurDemandee = false;
+let sauvegardeServeurRelance = false;
 const DELAI_SAUVEGARDE_AUTO = 1500;
 
 // ===== FORMAT DATE COURT =====
@@ -1084,64 +1085,82 @@ async function flushSauvegardeServeur(options = {}) {
 // ===== ENVOI GOOGLE SHEETS =====
 async function envoyerGoogleSheets(options = {}) {
   if (!employe || employe.role === 'responsable') return false;
-  const { semaineDu, lignesNonVides, signature } = preparerPayloadSauvegarde();
-  if (!semaineDu) {
-    if (!options.silencieux) afficherToast('Renseigne la date de début');
-    return false;
-  }
-  if (!options.autoriserVide && lignesNonVides.length === 0) {
-    if (!options.silencieux) afficherToast('Aucune donnée à envoyer');
-    return false;
-  }
-  if (!options.forcer && signature === derniereSauvegardeServeur) {
-    sauvegardeServeurDemandee = false;
-    afficherStatutEnvoi('Sauvegardé ✓', 'var(--vert)');
-    return true;
+
+  if (sauvegardeServeurEnCours && !options.forcer) {
+    sauvegardeServeurRelance = true;
+    return sauvegardeServeurEnCours;
   }
 
-  viderTimerSauvegardeServeur();
-  if (options.rerendre) renderTableau();
-  afficherStatutEnvoi('Sauvegarde...', 'var(--gris-fonce)');
-
-  const requete = async () => {
-    const res = await fetch(API_URL, {
-      method: 'POST',
-      body: JSON.stringify({
-        action: 'sauvegarder',
-        idEmploye: employe.id,
-        nom: employe.nom,
-        prenom: employe.prenom,
-        engin: document.getElementById('engin').value || '',
-        semaineDu,
-        semaineAu: document.getElementById('date-fin').value,
-        lignes: lignesNonVides.map(l => ({ ...l, total: formatHeures(calculerMinutes(l)) }))
-      })
-    });
-    return res.json();
-  };
-
-  try {
-    sauvegardeServeurEnCours = sauvegardeServeurEnCours ? sauvegardeServeurEnCours.then(requete, requete) : requete();
-    const json = await sauvegardeServeurEnCours;
-    sauvegardeServeurEnCours = null;
-
-    if (!json.ok) {
-      afficherStatutEnvoi('Non envoyé — réessayez', 'var(--rouge)');
-      if (!options.silencieux) afficherToast('Non envoyé — réessayez');
+  const executerSauvegarde = async () => {
+    const { semaineDu, lignesNonVides, signature } = preparerPayloadSauvegarde();
+    if (!semaineDu) {
+      if (!options.silencieux) afficherToast('Renseigne la date de début');
       return false;
     }
+    if (!options.autoriserVide && lignesNonVides.length === 0) {
+      if (!options.silencieux) afficherToast('Aucune donnée à envoyer');
+      return false;
+    }
+    if (!options.forcer && signature === derniereSauvegardeServeur) {
+      sauvegardeServeurDemandee = false;
+      afficherStatutEnvoi('Sauvegardé ✓', 'var(--vert)');
+      return true;
+    }
 
-    derniereSauvegardeServeur = signature;
-    sauvegardeServeurDemandee = false;
-    afficherStatutEnvoi('Sauvegardé ✓', 'var(--vert)');
-    return true;
-  } catch (e) {
-    sauvegardeServeurEnCours = null;
-    sauvegardeServeurDemandee = true;
-    afficherStatutEnvoi('Non envoyé — réessayez', 'var(--rouge)');
-    if (!options.silencieux) afficherToast('Non envoyé — vérifiez le réseau puis réessayez');
-    return false;
+    viderTimerSauvegardeServeur();
+    if (options.rerendre) renderTableau();
+    afficherStatutEnvoi('Sauvegarde...', 'var(--gris-fonce)');
+
+    try {
+      const res = await fetch(API_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'sauvegarder',
+          idEmploye: employe.id,
+          nom: employe.nom,
+          prenom: employe.prenom,
+          engin: document.getElementById('engin').value || '',
+          semaineDu,
+          semaineAu: document.getElementById('date-fin').value,
+          lignes: lignesNonVides.map((l, index) => ({
+            ...l,
+            ordre: index,
+            total: formatHeures(calculerMinutes(l))
+          }))
+        })
+      });
+      const json = await res.json();
+
+      if (!json.ok) {
+        sauvegardeServeurDemandee = true;
+        afficherStatutEnvoi('Non envoyé — réessayez', 'var(--rouge)');
+        if (!options.silencieux) afficherToast('Non envoyé — réessayez');
+        return false;
+      }
+
+      derniereSauvegardeServeur = signature;
+      sauvegardeServeurDemandee = false;
+      afficherStatutEnvoi('Sauvegardé ✓', 'var(--vert)');
+      return true;
+    } catch (e) {
+      sauvegardeServeurDemandee = true;
+      afficherStatutEnvoi('Non envoyé — réessayez', 'var(--rouge)');
+      if (!options.silencieux) afficherToast('Non envoyé — vérifiez le réseau puis réessayez');
+      return false;
+    }
+  };
+
+  sauvegardeServeurEnCours = executerSauvegarde();
+  const resultat = await sauvegardeServeurEnCours;
+  sauvegardeServeurEnCours = null;
+
+  if (sauvegardeServeurRelance && !feuilleVerrouillee) {
+    sauvegardeServeurRelance = false;
+    return envoyerGoogleSheets({ ...options, forcer: true, silencieux: true, autoriserVide: true });
   }
+
+  sauvegardeServeurRelance = false;
+  return resultat;
 }
 
 // ===== VÉRIFIER SI VALIDÉ PAR RESPONSABLE (côté chauffeur) =====
